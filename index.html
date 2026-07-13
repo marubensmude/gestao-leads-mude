@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mude Imóveis · Plataforma de Follow-up</title>
+<style>
+:root{--preto:#0e0e10;--preto2:#17171a;--card:#1d1d22;--borda:#2a2a30;--ouro:#c9a45c;--ouro2:#e3c98f;--branco:#f5f2ec;--cinza:#9a9aa2;--verde:#6fbf8b;--verm:#d97b6c;--azul:#7aa8d9}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--preto);color:var(--branco);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px}
+header{padding:22px 34px 16px;border-bottom:1px solid var(--borda);display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px}
+h1{font-size:20px;font-weight:600;letter-spacing:.06em}
+h1 span{color:var(--ouro)}
+.sub{color:var(--cinza);font-size:12.5px;margin-top:4px;letter-spacing:.04em}
+nav{display:flex;gap:6px;padding:14px 34px;border-bottom:1px solid var(--borda);flex-wrap:wrap}
+nav button{background:none;border:1px solid var(--borda);color:var(--cinza);padding:9px 18px;border-radius:22px;cursor:pointer;font-size:13px;letter-spacing:.03em;transition:.15s}
+nav button.on{background:var(--ouro);border-color:var(--ouro);color:#151515;font-weight:600}
+nav button:hover:not(.on){border-color:var(--ouro);color:var(--ouro)}
+main{padding:24px 34px 60px;max-width:1440px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:26px}
+.kpi{background:var(--card);border:1px solid var(--borda);border-radius:12px;padding:16px 18px}
+.kpi .v{font-size:23px;font-weight:650;color:var(--ouro2);margin-top:4px}
+.kpi .l{color:var(--cinza);font-size:11.5px;text-transform:uppercase;letter-spacing:.09em}
+.kpi .d{color:var(--cinza);font-size:11.5px;margin-top:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--borda);border-radius:12px;padding:20px;margin-bottom:16px}
+.box h3{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--ouro);margin-bottom:14px;font-weight:600}
+.tbox{padding:0;overflow-x:auto}
+.tbox .mais{margin:14px auto 16px;display:block}
+.bar{display:flex;align-items:center;gap:10px;margin:7px 0}
+.bar .lb{width:180px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .tr{flex:1;background:#101013;border-radius:5px;height:16px;overflow:hidden}
+.bar .fl{height:100%;background:linear-gradient(90deg,var(--ouro),var(--ouro2));border-radius:5px}
+.bar .vl{width:120px;font-size:12px;color:var(--cinza);text-align:right}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.bk{border:1px solid var(--borda);border-radius:12px;padding:14px 16px;cursor:pointer;background:var(--card);transition:.15s}
+.bk:hover{border-color:var(--ouro)}
+.bk.sel{border-color:var(--ouro);box-shadow:0 0 0 1px var(--ouro)}
+.bk .n{font-size:22px;font-weight:650}
+.bk .t{font-size:12.5px;margin-top:2px;font-weight:600}
+.bk .d{font-size:11.5px;color:var(--cinza);margin-top:5px;line-height:1.45}
+.bk.A .n,.bk.A .t{color:var(--verm)}.bk.B .n,.bk.B .t{color:var(--ouro2)}.bk.C .n,.bk.C .t{color:var(--azul)}.bk.D .n,.bk.D .t{color:var(--cinza)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+select,input[type=text],input[type=password]{background:var(--preto2);border:1px solid var(--borda);color:var(--branco);padding:9px 12px;border-radius:8px;font-size:13px;outline:none}
+select:focus,input:focus{border-color:var(--ouro)}
+input[type=text]{min-width:210px}
+.btn{background:none;border:1px solid var(--ouro);color:var(--ouro);padding:9px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;letter-spacing:.03em}
+.btn:hover{background:var(--ouro);color:#151515}
+.btn2{background:none;border:1px solid var(--borda);color:var(--cinza);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11.5px}
+.btn2:hover{border-color:var(--ouro);color:var(--ouro)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--cinza);text-align:left;padding:10px;border-bottom:1px solid var(--borda);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--ouro)}
+th .ar{color:var(--ouro);font-size:10px}
+td{padding:10px;border-bottom:1px solid #222227;font-size:13px;vertical-align:top}
+tr:hover td{background:#202026}
+.tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.tA{background:rgba(217,123,108,.16);color:var(--verm)}.tB{background:rgba(227,201,143,.14);color:var(--ouro2)}.tC{background:rgba(122,168,217,.14);color:var(--azul)}.tD{background:rgba(154,154,162,.14);color:var(--cinza)}
+.et{color:var(--cinza);font-size:11.5px}
+.wa{color:var(--verde);text-decoration:none;font-size:12.5px;white-space:nowrap}
+.wa:hover{text-decoration:underline}
+.sc{color:var(--ouro2);font-weight:650}
+.acao{font-size:12px;color:var(--cinza);min-width:200px;max-width:250px;line-height:1.5}
+.msgc{font-size:12px;color:#cfccc4;min-width:250px;max-width:300px;line-height:1.5}
+.nome{font-weight:600}
+.meta2{font-size:11.5px;color:var(--cinza);margin-top:2px}
+.hint{color:var(--cinza);font-size:12.5px;line-height:1.6;margin-bottom:12px}
+.reco{color:var(--ouro2);font-size:12px;margin:0 0 12px;letter-spacing:.02em}
+.met p{color:#cfccc4;font-size:13.5px;line-height:1.75;margin-bottom:12px}
+.met b{color:var(--ouro2);font-weight:600}
+footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);font-size:11.5px;letter-spacing:.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.hide{display:none!important}
+/* login */
+#loginWrap{position:fixed;inset:0;background:var(--preto);display:flex;align-items:center;justify-content:center;z-index:50}
+.lbox{background:var(--card);border:1px solid var(--borda);border-radius:16px;padding:38px 40px;width:380px;max-width:92vw}
+.lbox h2{font-size:19px;letter-spacing:.06em;font-weight:600;text-align:center}
+.lbox h2 span{color:var(--ouro)}
+.lbox .s{color:var(--cinza);font-size:12px;text-align:center;margin:6px 0 24px;letter-spacing:.04em}
+.lbox label{display:block;font-size:11.5px;color:var(--cinza);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px}
+.lbox input{width:100%}
+.pwrow{position:relative}
+.pwrow input{padding-right:42px}
+.eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--cinza);cursor:pointer;font-size:15px}
+.eye:hover{color:var(--ouro)}
+.lbox .btn{width:100%;margin-top:22px;padding:11px}
+.lerr{color:var(--verm);font-size:12px;margin-top:12px;text-align:center;min-height:16px}
+.lesq{display:block;text-align:center;margin-top:14px;color:var(--cinza);font-size:12px;cursor:pointer;text-decoration:underline}
+.lesq:hover{color:var(--ouro)}
+.linfo{color:var(--cinza);font-size:12px;line-height:1.6;margin-top:14px;background:var(--preto2);border:1px solid var(--borda);border-radius:8px;padding:12px}
+.userchip{font-size:12.5px;color:var(--cinza)}
+.userchip b{color:var(--ouro2)}
+#app{display:none}
+</style>
+</head>
+<body>
+
+<div id="loginWrap">
+  <div class="lbox">
+    <h2>MUDE <span>IMÓVEIS</span></h2>
+    <div class="s">Plataforma de Follow-up · Acesso restrito</div>
+    <label>Login</label>
+    <input type="text" id="lgUser" autocomplete="username">
+    <label>Senha</label>
+    <div class="pwrow">
+      <input type="password" id="lgPass" autocomplete="current-password">
+      <button class="eye" id="lgEye" title="Visualizar senha">&#128065;</button>
+    </div>
+    <button class="btn" id="lgBtn">Entrar</button>
+    <div class="lerr" id="lgErr"></div>
+    <span class="lesq" id="lgEsq">Esqueci minha senha</span>
+    <div class="linfo hide" id="lgInfo">A recuperação de senha é feita com o administrador: <b style="color:var(--ouro2)">Mário Rubens · mario@mudeimobiliaria.com.br</b>. Ele consulta e informa seu acesso pela aba Administração da plataforma.</div>
+  </div>
+</div>
+
+<div id="app">
+<header>
+  <div>
+    <h1>MUDE <span>IMÓVEIS</span> · Plataforma de Follow-up</h1>
+    <div class="sub">Curadoria de atendimentos · Base Praedium · Atualizada em <span id="hGerado"></span></div>
+  </div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <span class="userchip" id="uChip"></span>
+    <button class="btn2" id="btnSair">Sair</button>
+  </div>
+</header>
+<nav id="navBar">
+  <button class="on" data-t="visao">Visão Geral</button>
+  <button data-t="plano">Plano de Trabalho</button>
+  <button data-t="recup">Recuperação de Perdidos</button>
+  <button data-t="vendas">Vendas Realizadas</button>
+  <button data-t="metodo">Metodologia</button>
+  <button data-t="admin" id="navAdmin" class="hide">Administração</button>
+</nav>
+<main>
+
+<section id="visao">
+  <div class="controls"><button class="btn" id="docVis">Exportar Word</button></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid2">
+    <div class="box"><h3>Conversão por origem (mín. 30 leads)</h3><div id="convOrigem"></div></div>
+    <div class="box"><h3>Conversão por corretor (mín. 20 leads)</h3><div id="convCorretor"></div></div>
+    <div class="box"><h3>Motivos de perda</h3><div id="motivos"></div></div>
+    <div class="box"><h3>Vendas por ano</h3><div id="ganhosAno"></div>
+      <h3 style="margin-top:22px">Leitura consultiva</h3><div class="hint" id="leitura"></div></div>
+  </div>
+</section>
+
+<section id="plano" class="hide">
+  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento.</div>
+  <div class="reco">Recomendação de trabalho: mantenha a ordenação por Prioridade e zere a faixa "Agir hoje" antes das demais; nas faixas frias, ordene por Valor para começar pelos tickets maiores.</div>
+  <div class="controls">
+    <select id="selCorretor" class="soAdmin"></select>
+    <input type="text" id="buscaAb" placeholder="Buscar por nome, telefone ou e-mail">
+    <button class="btn" id="docAb">Exportar Word</button>
+    <button class="btn" id="csvAb">Baixar CSV</button>
+  </div>
+  <div class="buckets" id="bkRow"></div>
+  <div class="box tbox"><table id="tbAb"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisAb">Mostrar mais</button></div>
+</section>
+
+<section id="recup" class="hide">
+  <div class="hint">Perdidos com potencial real de retomada. Prioridade: <b style="color:var(--ouro2)">Adiou a compra (Oportunidade Futura)</b>, depois os sem motivo registrado (encerrados sem tratamento) e os que não aprovaram financiamento (condição de crédito muda).</div>
+  <div class="reco">Recomendação de trabalho: dentro do motivo "Adiou a compra", ordene por Valor decrescente e trabalhe em lotes semanais de 20 a 30 contatos.</div>
+  <div class="controls">
+    <select id="selMotivo"></select>
+    <select id="selCorretorR" class="soAdmin"></select>
+    <input type="text" id="buscaRc" placeholder="Buscar por nome, telefone ou e-mail">
+    <button class="btn" id="docRc">Exportar Word</button>
+    <button class="btn" id="csvRc">Baixar CSV</button>
+  </div>
+  <div class="box tbox"><table id="tbRc"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisRc">Mostrar mais</button></div>
+</section>
+
+<section id="vendas" class="hide">
+  <div class="reco">Recomendação: ordene por Fechamento (mais recente) para acompanhar o ritmo de vendas; por Valor para analisar o mix de ticket.</div>
+  <div class="controls">
+    <select id="selCorretorG" class="soAdmin"></select>
+    <select id="selOrigemG"></select>
+    <input type="text" id="buscaGn" placeholder="Buscar venda">
+    <button class="btn" id="docGn">Exportar Word</button>
+    <button class="btn" id="csvGn">Baixar CSV</button>
+  </div>
+  <div class="box tbox"><table id="tbGn"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisGn">Mostrar mais</button></div>
+</section>
+
+<section id="metodo" class="hide">
+  <div class="box met">
+    <h3>Como a priorização funciona</h3>
+    <p>Cada atendimento aberto recebe um <b>score de prioridade</b> que combina cinco fatores: a <b>etapa do funil</b> (proposta e visitas pesam mais que entrada e atendimento), a <b>recência do contato</b>, o <b>valor do atendimento</b> quando informado, a existência de <b>imóveis vinculados</b> e a situação da <b>próxima tarefa</b> (tarefa vencida soma mais pontos porque indica compromisso não cumprido).</p>
+    <p>Os atendimentos são distribuídos em quatro faixas. <b>Agir hoje</b> reúne tarefas vencidas, leads recém-chegados e etapas avançadas: é a lista que cada corretor deve zerar diariamente. <b>Follow-up da semana</b> concentra leads com 4 a 15 dias sem contato. <b>Reaquecer</b> cobre a faixa de 16 a 90 dias, em que o contato precisa vir acompanhado de uma novidade concreta. <b>Requalificar</b> reúne os inativos há mais de 90 dias: a plataforma indica o motivo provável do esfriamento e recomenda uma última tentativa estruturada; sem resposta, registrar o motivo de perda correto no CRM.</p>
+    <p>As <b>mensagens sugeridas</b> seguem o padrão consultivo da Mude Imóveis e se apoiam nos Seis Pontos (SMP): localização, tipologia, qualidade, diferenciais, preço e forma de pagamento. Elas são personalizadas com o nome do cliente, a origem do lead, a faixa de valor e o momento do atendimento, e assinadas com o nome de quem está logado. São ponto de partida: o corretor deve ajustar ao contexto de cada conversa.</p>
+    <p>A coluna <b>"Sem interação"</b> mede os dias desde a última alteração do atendimento no CRM, ou seja, há quanto tempo o corretor não trabalha aquele cliente. É o principal termômetro de disciplina de follow-up.</p>
+    <p>A base é <b>incremental</b>: cada novo export do Praedium soma registros e atualiza os existentes, sem sobrepor o histórico. Este material é uma curadoria comercial, não um laudo técnico, e reflete a base na data indicada no topo.</p>
+  </div>
+</section>
+
+<section id="admin" class="hide">
+  <div class="box"><h3>Acessos dos corretores</h3>
+    <div class="hint">Cada corretor enxerga somente os próprios atendimentos. Senhas visíveis apenas nesta aba. Para trocar uma senha ou incluir corretor, solicite a atualização da plataforma.</div>
+    <div class="tbox"><table id="tbCred"><thead><tr><th>Nome</th><th>Login</th><th>Senha</th><th>E-mail</th><th>Perfil</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="box"><h3>Gestão da base incremental</h3>
+    <div class="hint" id="fontesInfo"></div>
+    <div class="hint">Como funciona: os exports do Praedium (por qualquer faixa de data) são somados à <b style="color:var(--ouro2)">base mestre</b>, que guarda o histórico consolidado. Registros repetidos são atualizados pela versão mais recente (Última Alteração); nada é sobreposto ou perdido. Depois de importado, o CSV original pode ser apagado sem prejuízo, pois os dados já vivem na base mestre. Guarde o arquivo <b style="color:var(--ouro2)">mude_base.json</b>: ele é o banco de dados de longo prazo desta plataforma.</div>
+  </div>
+</section>
+
+</main>
+<footer><span>Mude Imóveis · Dourados-MS · Uso interno</span><span>Plataforma de Follow-up · v3.0 · Online</span></footer>
+</div>
+
+<script>
+let D = null;
+/* ================= util ================= */
+const fmtBRL = v => v==null?'—':v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fx = v => v>=1e6 ? `R$ ${(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})} milhões` : `R$ ${Math.round(v/1000)} mil`;
+const primNome = n => (n||'').trim().split(/\s+/)[0];
+async function decifra(pac, senha){
+  const b = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({name:'PBKDF2',salt:b(pac.salt),iterations:pac.iter,hash:'SHA-256'}, km, {name:'AES-GCM',length:256}, false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM',iv:b(pac.iv)}, key, b(pac.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function copia(txt, btn){
+  const done = ()=>{const o=btn.textContent;btn.textContent='Copiado ✓';setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(done).catch(()=>{fallback();done();});}
+  else {fallback();done();}
+  function fallback(){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+}
+
+/* ================= textos consultivos (SMP) ================= */
+const BK = {A:{t:'Agir hoje',d:'Tarefa vencida, lead recém-chegado ou etapa avançada. Contato imediato.'},
+            B:{t:'Follow-up da semana',d:'4 a 15 dias sem contato. Retomar com novidade concreta.'},
+            C:{t:'Reaquecer',d:'16 a 90 dias parado. Abordagem consultiva com atualização de mercado.'},
+            D:{t:'Requalificar',d:'Mais de 90 dias inativo. Última tentativa; sem resposta, registrar motivo e encerrar.'}};
+const origemFrase = o => ({'Facebook Leads':'pelo nosso anúncio no Facebook','Site':'pelo nosso site','Leadster':'pelo nosso site','WhatsApp Chat':'pelo nosso WhatsApp','WhatsApp':'pelo nosso WhatsApp','GrupoZap':'pelo portal de imóveis','ImóvelWeb':'pelo portal de imóveis','Zap+':'pelo portal de imóveis','Zap':'pelo portal de imóveis','Portal':'pelo portal de imóveis'})[o]||'pelo nosso atendimento';
+function motivoProvavel(l){
+  if(!l.t) return 'Contato insuficiente: sem telefone válido registrado';
+  if(!l.at && l.i>180) return 'Nunca houve atendimento estruturado (sem atividades registradas)';
+  if(['GrupoZap','ImóvelWeb','Zap+','Zap','Portal','Site'].includes(l.o) && !l.v) return 'Curiosidade de anúncio: lead de portal sem qualificação de valor';
+  if(l.v && l.v>=500000) return 'Compra provavelmente adiada: ticket alto exige maturação';
+  return 'Esfriou por falta de follow-up contínuo';
+}
+function dicaReaquecer(l){
+  if(l.im) return 'Reapresente o imóvel que ele consultou, com atualização de preço ou condição.';
+  if(l.v) return `Leve 2 ou 3 opções na faixa de ${fx(l.v)} com comparativo de localização e diferenciais (SMP).`;
+  return 'Envie uma leitura curta do mercado da região desejada e pergunte pelo momento de compra.';
+}
+function msgFor(l, tipo, sender){
+  const n = primNome(l.n), s = primNome(sender||l.cr);
+  const oi = `Olá, ${n}, tudo bem? Aqui é ${s}, da Mude Imóveis.`;
+  if(tipo==='A'){
+    if(['Proposta','Visita Agendada','Visita Realizada'].includes(l.et)){
+      const passo = l.et==='Proposta'?'da sua proposta':(l.et==='Visita Agendada'?'da visita que agendamos':'da visita que fizemos');
+      return `${oi} Passando para alinharmos o próximo passo ${passo}. Tenho informações que podem ajudar na sua decisão. Podemos falar hoje?`;
+    }
+    return `${oi} Recebi o seu interesse ${origemFrase(l.o)}${l.im?', inclusive no imóvel que você consultou':''}. Antes de enviar opções, quero entender o que pesa mais para você: localização, tipo de imóvel ou condição de pagamento. Assim seleciono só o que faz sentido. Podemos conversar?`;
+  }
+  if(tipo==='B') return `${oi} Na nossa última conversa você estava avaliando imóveis${l.v?` na faixa de ${fx(l.v)}`:''}. Surgiram opções novas, bem posicionadas em localização e condição, e lembrei do seu perfil. Quer que eu envie uma seleção?`;
+  if(tipo==='C') return `${oi} Faz um tempo que conversamos sobre a sua busca por imóvel. O mercado da região teve boas movimentações nesse período${l.v?`, inclusive na faixa de ${fx(l.v)}`:''}. Seu plano segue de pé, mudou ou ficou para mais adiante? Me conta que eu ajusto a curadoria para você.`;
+  if(tipo==='D') return `${oi} Estou reorganizando meus atendimentos para cuidar melhor de cada cliente. Você ainda tem interesse em ${l.v?`imóveis na faixa de ${fx(l.v)}`:'comprar imóvel na região'}, ou prefere que a gente retome em outro momento? Qualquer resposta já me ajuda a te atender melhor.`;
+  return `${oi} Quando conversamos, a compra ficou para um momento futuro. O mercado teve boas movimentações por aqui e pensei em você: faz sentido retomarmos agora${l.v?`, na faixa de ${fx(l.v)}`:''}? Sem compromisso, posso te mostrar o que mudou.`;
+}
+function analiseCell(l){
+  if(l.b==='A') return (l.pt?`Tarefa registrada para ${l.pt}. `:'')+'Contato hoje, por telefone ou WhatsApp. Se houver visita ou proposta em curso, confirme o próximo passo.';
+  if(l.b==='B') return 'Retome esta semana apresentando uma novidade concreta: imóvel compatível, condição especial ou análise da região.';
+  if(l.b==='C') return 'Reaquecimento consultivo. Dica: '+dicaReaquecer(l);
+  return 'Motivo provável: '+motivoProvavel(l)+'. Última tentativa estruturada; sem resposta em 7 dias, mover para Perdido com o motivo correto.';
+}
+
+/* ================= login ================= */
+let USER = null;
+async function tentaLogin(){
+  const lg = (document.getElementById('lgUser').value||'').trim().toLowerCase();
+  const pw = document.getElementById('lgPass').value;
+  const err = document.getElementById('lgErr');
+  err.textContent = 'Verificando...';
+  let resp;
+  try { resp = await fetch('data/'+encodeURIComponent(lg)+'.json', {cache:'no-store'}); }
+  catch(e){ err.textContent='Falha de conexão. Tente novamente.'; return; }
+  if(!resp.ok){err.textContent='Login não encontrado. Verifique com o administrador.';return;}
+  let payload;
+  try { payload = await decifra(await resp.json(), pw); }
+  catch(e){ err.textContent='Senha incorreta.'; return; }
+  err.textContent='';
+  localStorage.setItem('mudeUser', lg);
+  D = payload;
+  entra(payload.user);
+}
+function entra(c){
+  USER = c;
+  document.getElementById('loginWrap').classList.add('hide');
+  document.getElementById('app').style.display='block';
+  document.getElementById('uChip').innerHTML = `Logado como <b>${esc(c.nome)}</b>${c.admin?' · Administrador':''}`;
+  if(c.admin) document.getElementById('navAdmin').classList.remove('hide');
+  document.querySelectorAll('.soAdmin').forEach(el=>{if(!c.admin) el.classList.add('hide');});
+  boot();
+}
+document.getElementById('lgBtn').onclick = tentaLogin;
+document.getElementById('lgPass').addEventListener('keydown',e=>{if(e.key==='Enter')tentaLogin();});
+document.getElementById('lgEye').onclick = e=>{e.preventDefault();const i=document.getElementById('lgPass');i.type = i.type==='password'?'text':'password';};
+document.getElementById('lgEsq').onclick = ()=>document.getElementById('lgInfo').classList.toggle('hide');
+document.getElementById('btnSair').onclick = ()=>{localStorage.removeItem('mudeUser');location.reload();};
+
+/* ================= navegação ================= */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  document.querySelectorAll('main > section').forEach(s=>s.classList.add('hide'));
+  document.getElementById(b.dataset.t).classList.remove('hide');
+});
+
+/* ================= tabela genérica com ordenação ================= */
+function montaTabela(cfg){
+  let mostrar = 50, sortC = cfg.sortC ?? null, sortD = cfg.sortD ?? 1;
+  const thead = document.querySelector(cfg.tb+' thead');
+  const drawHead = ()=>{
+    thead.innerHTML = '<tr>'+cfg.cols.map((c,i)=>`<th data-i="${i}" title="Clique para ordenar">${c.h}${sortC===i?`<span class="ar"> ${sortD>0?'▲':'▼'}</span>`:''}</th>`).join('')+'</tr>';
+    thead.querySelectorAll('th').forEach(th=>th.onclick=()=>{
+      const i=+th.dataset.i;
+      if(sortC===i) sortD=-sortD; else {sortC=i;sortD=cfg.cols[i].desc?-1:1;}
+      render();
+    });
+  };
+  const render = ()=>{
+    let rows = cfg.filtrar();
+    if(sortC!=null){
+      const acc = cfg.cols[sortC].k;
+      rows = rows.slice().sort((a,b)=>{
+        let x=acc(a), y=acc(b);
+        if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1;
+        if(typeof x==='string') return sortD*x.localeCompare(y,'pt-BR');
+        return sortD*(x-y);
+      });
+    }
+    drawHead();
+    document.querySelector(cfg.tb+' tbody').innerHTML = rows.slice(0,mostrar).map(cfg.linha).join('');
+    const btn = document.getElementById(cfg.mais);
+    btn.classList.toggle('hide', rows.length<=mostrar);
+    btn.textContent = `Mostrar mais (${Math.min(mostrar,rows.length)} de ${rows.length})`;
+    cfg._rows = rows;
+    cfg.depois && cfg.depois();
+  };
+  document.getElementById(cfg.mais).onclick = ()=>{mostrar+=100;render();};
+  cfg.inputs.forEach(id=>{const el=document.getElementById(id);el.oninput=el.onchange=()=>{mostrar=50;render();};});
+  cfg.render = ()=>{mostrar=50;render();};
+  return cfg;
+}
+const dBR = s=>{if(!s)return null;const p=s.split('/');return p.length===3?+(p[2]+p[1].padStart(2,'0')+p[0].padStart(2,'0')):null;};
+function baixaCSV(nome, cab, rows, linha){
+  const csv = '﻿'+[cab.join(';')].concat(rows.map(linha)).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = nome; a.click();
+}
+/* ---- exportação Word (doc editável) ---- */
+function baixaWord(nomeArq, titulo, subtitulo, blocos){
+  const tabelas = blocos.map(b=>`
+    ${b.titulo?`<h2 style="font-family:Georgia,serif;font-size:14pt;color:#8a6d2f;margin:22pt 0 8pt">${esc(b.titulo)}</h2>`:''}
+    ${b.nota?`<p style="font-size:9.5pt;color:#666;margin:0 0 8pt">${esc(b.nota)}</p>`:''}
+    <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:9pt;border:1pt solid #bbb">
+      <tr>${b.cab.map(h=>`<th style="background:#111111;color:#c9a45c;text-align:left;padding:6pt;font-size:8.5pt">${esc(h)}</th>`).join('')}</tr>
+      ${b.linhas.map(r=>`<tr>${r.map(c=>`<td style="padding:5pt;vertical-align:top">${esc(c)}</td>`).join('')}</tr>`).join('')}
+    </table>`).join('');
+  const html = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(titulo)}</title></head>
+  <body style="font-family:Calibri,Arial,sans-serif;color:#222">
+    <div style="background:#111111;padding:16pt 20pt">
+      <p style="margin:0;font-family:Georgia,serif;font-size:16pt;color:#ffffff;letter-spacing:2pt">MUDE <span style="color:#c9a45c">IMÓVEIS</span></p>
+      <p style="margin:4pt 0 0;font-size:9pt;color:#c9a45c;letter-spacing:1pt">PLATAFORMA DE FOLLOW-UP · USO INTERNO</p>
+    </div>
+    <h1 style="font-family:Georgia,serif;font-size:17pt;color:#111;margin:20pt 0 4pt">${esc(titulo)}</h1>
+    <p style="font-size:10pt;color:#666;margin:0 0 6pt">${esc(subtitulo)}</p>
+    ${tabelas}
+    <p style="font-size:8.5pt;color:#888;margin-top:24pt;border-top:1pt solid #ccc;padding-top:8pt">Curadoria comercial gerada pela Plataforma de Follow-up da Mude Imóveis a partir da base do CRM. Documento de trabalho interno; as mensagens sugeridas são ponto de partida e devem ser ajustadas ao contexto de cada cliente. Mude que a Gente te Acompanha.</p>
+  </body></html>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+html],{type:'application/msword'}));
+  a.download = nomeArq; a.click();
+}
+const hoje = ()=>D.sum.gerado;
+
+/* ================= boot (após login) ================= */
+function boot(){
+/* ---------- bases visíveis conforme o usuário ---------- */
+const meuAb = ()=> USER.admin? D.ab : D.ab.filter(l=>l.cr===USER.nome);
+const meuRc = ()=> USER.admin? D.rc : D.rc.filter(l=>l.cr===USER.nome);
+const meuGn = ()=> USER.admin? D.gn : D.gn.filter(l=>l.cr===USER.nome);
+
+/* ---------- visão geral ---------- */
+document.getElementById('hGerado').textContent = D.sum.gerado;
+const st = D.sum.status, tot = D.sum.total;
+const conv = (100*(st['Ganho']||0)/tot).toFixed(1);
+const kpis = [
+  ['Atendimentos', tot.toLocaleString('pt-BR'), 'histórico consolidado'],
+  ['Abertos', st['Aberto']||0, 'em carteira ativa'],
+  ['Ganhos', st['Ganho']||0, `conversão de ${conv}%`],
+  ['Perdidos', (st['Perdido']||0).toLocaleString('pt-BR'), `${D.rc.length.toLocaleString('pt-BR')} recuperáveis`],
+  ['VGV realizado', fmtBRL(D.sum.vgv), D.sum.vgv_out?`${D.sum.vgv_out} registros com valor inconsistente excluídos`:'soma dos ganhos'],
+  ['Agir hoje', D.sum.abertos_bucket['A']||0, 'prioridade imediata']];
+document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+function bars(el, arr, lab, val, max){
+  document.getElementById(el).innerHTML = arr.map(x=>{
+    const w = Math.max(2, 100*val(x)/max);
+    return `<div class="bar"><div class="lb" title="${esc(lab(x))}">${esc(lab(x))}</div><div class="tr"><div class="fl" style="width:${w}%"></div></div><div class="vl">${x._v}</div></div>`;
+  }).join('');
+}
+let co = D.sum.conv_origem.slice().sort((a,b)=>b.p-a.p).slice(0,10);
+co.forEach(x=>x._v=`${x.p}% (${x.g}/${x.t})`);
+bars('convOrigem', co, x=>x.k, x=>x.p, Math.max(...co.map(x=>x.p)));
+let cc = D.sum.conv_corretor.slice().sort((a,b)=>b.p-a.p).slice(0,12);
+cc.forEach(x=>x._v=`${x.p}% (${x.g}/${x.t})`);
+bars('convCorretor', cc, x=>x.k, x=>x.p, Math.max(...cc.map(x=>x.p)));
+let mo = D.sum.motivos.slice(0,10).map(m=>({k:m[0],n:m[1],_v:m[1].toLocaleString('pt-BR')}));
+bars('motivos', mo, x=>x.k, x=>x.n, Math.max(...mo.map(x=>x.n)));
+let ga = D.sum.ganhos_ano.map(g=>({k:String(g[0]),n:g[1],_v:g[1]}));
+bars('ganhosAno', ga, x=>x.k, x=>x.n, Math.max(...ga.map(x=>x.n)));
+const melhor = co[0]||{k:'—',p:0};
+document.getElementById('leitura').innerHTML =
+ `A base mostra ${st['Aberto']} atendimentos abertos, dos quais ${D.sum.abertos_bucket['A']||0} pedem ação imediata e ${D.sum.abertos_bucket['D']||0} estão parados há mais de 90 dias, aguardando requalificação. `+
+ `A origem com melhor conversão é <b style="color:var(--ouro2)">${esc(melhor.k)}</b> (${melhor.p}%), referência para direcionar investimento em captação. `+
+ `Entre os perdidos, ${D.rc.length.toLocaleString('pt-BR')} têm potencial de recuperação, com destaque para os que adiaram a compra.`;
+document.getElementById('docVis').onclick = ()=>baixaWord('Mude_Visao_Geral.doc','Visão Geral da Carteira',`Base atualizada em ${hoje()} · ${tot.toLocaleString('pt-BR')} atendimentos`,[
+  {titulo:'Indicadores', cab:['Indicador','Valor','Observação'], linhas:kpis},
+  {titulo:'Conversão por origem', cab:['Origem','Leads','Vendas','Conversão'], linhas:co.map(x=>[x.k,x.t,x.g,x.p+'%'])},
+  {titulo:'Conversão por corretor', cab:['Corretor','Leads','Vendas','Conversão'], linhas:cc.map(x=>[x.k,x.t,x.g,x.p+'%'])},
+  {titulo:'Motivos de perda', cab:['Motivo','Atendimentos'], linhas:D.sum.motivos.map(m=>[m[0],m[1]])}]);
+
+/* ---------- células compartilhadas ---------- */
+const clienteCell = l => `<div class="nome">${esc(l.n)}</div><div class="meta2">criado em ${l.cd}${l.pt?' · tarefa: '+l.pt:''}</div>`;
+const contatoCell = (l,txt) => `${esc(l.t)}${l.w?`<br><a class="wa" target="_blank" href="https://wa.me/${l.w}?text=${encodeURIComponent(txt)}">WhatsApp ↗</a>`:''}${l.e?`<div class="meta2">${esc(l.e)}</div>`:''}`;
+const msgCell = txt => `<div class="msgc">${esc(txt)}<br><button class="btn2" style="margin-top:6px" onclick="copia(this.dataset.m,this)" data-m="${esc(txt)}">Copiar mensagem</button></div>`;
+window.copia = copia;
+
+/* ---------- plano de trabalho ---------- */
+const selC = document.getElementById('selCorretor');
+if(USER.admin){
+  const corretores = [...new Set(D.ab.map(l=>l.cr))].sort();
+  selC.innerHTML = `<option value="">Todos os corretores (${D.ab.length})</option>`+corretores.map(c=>`<option value="${esc(c)}">${esc(c)} (${D.ab.filter(l=>l.cr===c).length})</option>`).join('');
+}
+let bkSel = '';
+function renderBuckets(rowsAll){
+  const bkRow = document.getElementById('bkRow');
+  bkRow.innerHTML = ['A','B','C','D'].map(b=>{
+    const n = rowsAll.filter(l=>l.b===b).length;
+    return `<div class="bk ${b} ${bkSel===b?'sel':''}" data-b="${b}"><div class="n">${n}</div><div class="t">${BK[b].t}</div><div class="d">${BK[b].d}</div></div>`;
+  }).join('');
+  bkRow.querySelectorAll('.bk').forEach(el=>el.onclick=()=>{bkSel = bkSel===el.dataset.b?'':el.dataset.b; tAb.render();});
+}
+const colsAb = [
+  {h:'Prior.', k:l=>l.s, desc:true},
+  {h:'Cliente', k:l=>l.n},
+  {h:'Contato', k:l=>l.t},
+  {h:'Etapa', k:l=>l.et},
+  {h:'Origem', k:l=>l.o},
+  {h:'Valor', k:l=>l.v, desc:true},
+  {h:'Inativo', k:l=>l.i, desc:true},
+  {h:'Sem interação', k:l=>l.si, desc:true},
+  {h:'Faixa', k:l=>l.b},
+  {h:'Análise e ação', k:l=>l.b},
+  {h:'Mensagem sugerida', k:l=>l.n}];
+const tAb = montaTabela({
+  tb:'#tbAb', mais:'maisAb', inputs:['selCorretor','buscaAb'], cols:colsAb, sortC:0, sortD:-1,
+  filtrar(){
+    const c = USER.admin? selC.value : USER.nome;
+    const q = document.getElementById('buscaAb').value.toLowerCase();
+    let base = meuAb().filter(l=>!c||l.cr===c);
+    renderBuckets(base);
+    if(bkSel) base = base.filter(l=>l.b===bkSel);
+    if(q) base = base.filter(l=>(l.n+l.t+(l.e||'')).toLowerCase().includes(q));
+    return base;
+  },
+  linha(l){
+    const txt = msgFor(l,l.b,USER.nome);
+    return `<tr><td class="sc">${l.s}</td><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td>
+    <td class="et">${esc(l.et)}</td><td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td>
+    <td>${l.i>=0?l.i+' d':'—'}</td><td>${l.si!=null?l.si+' d':'—'}</td>
+    <td><span class="tag t${l.b}">${BK[l.b].t}</span></td><td class="acao">${esc(analiseCell(l))}</td><td>${msgCell(txt)}</td></tr>`;
+  }
+});
+const abExpRows = ()=>tAb._rows.map(l=>[BK[l.b].t+' · score '+l.s, l.n, l.t+(l.e?' · '+l.e:''), l.et, l.o, l.v?fmtBRL(l.v):'—', (l.i>=0?l.i+' d':'—')+' / '+(l.si!=null?l.si+' d':'—'), analiseCell(l), msgFor(l,l.b,USER.nome)]);
+document.getElementById('docAb').onclick = ()=>baixaWord('Mude_Plano_de_Trabalho.doc','Plano de Trabalho · Atendimentos Abertos',
+  `${USER.admin?(selC.value||'Todos os corretores'):USER.nome} · Base de ${hoje()} · ${tAb._rows.length} atendimentos · ordem atual da tela`,
+  [{nota:'Colunas de tempo: dias de inatividade do lead (CRM) / dias sem interação do corretor.',
+    cab:['Faixa / Prioridade','Cliente','Contato','Etapa','Origem','Valor','Inativo / Sem interação','Análise e ação','Mensagem sugerida'],
+    linhas:abExpRows()}]);
+document.getElementById('csvAb').onclick = ()=>baixaCSV('plano_de_trabalho_mude.csv',
+  ['Score','Faixa','Cliente','Telefone','Email','Etapa','Origem','Valor','Inativo (d)','Sem interacao (d)','Analise','Mensagem','Corretor'],
+  tAb._rows, l=>[l.s,BK[l.b].t,l.n,l.t,l.e,l.et,l.o,l.v||'',l.i,l.si??'',analiseCell(l),msgFor(l,l.b,USER.nome),l.cr].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
+
+/* ---------- recuperação ---------- */
+const motivosR = [...new Set(D.rc.map(l=>l.mp))];
+document.getElementById('selMotivo').innerHTML = `<option value="">Todos os motivos</option>`+motivosR.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
+if(USER.admin){
+  const cs = [...new Set(D.rc.map(l=>l.cr))].sort();
+  document.getElementById('selCorretorR').innerHTML = `<option value="">Todos os corretores</option>`+cs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+const colsRc = [
+  {h:'Cliente', k:l=>l.n},
+  {h:'Contato', k:l=>l.t},
+  {h:'Motivo', k:l=>l.mp},
+  {h:'Origem', k:l=>l.o},
+  {h:'Valor', k:l=>l.v, desc:true},
+  {h:'Perdido há', k:l=>l.si, desc:true},
+  {h:'Corretor original', k:l=>l.cr},
+  {h:'Mensagem sugerida', k:l=>l.n}];
+const tRc = montaTabela({
+  tb:'#tbRc', mais:'maisRc', inputs:['selMotivo','selCorretorR','buscaRc'], cols:colsRc,
+  filtrar(){
+    const m = document.getElementById('selMotivo').value;
+    const c = USER.admin? document.getElementById('selCorretorR').value : USER.nome;
+    const q = document.getElementById('buscaRc').value.toLowerCase();
+    return meuRc().filter(l=>(!m||l.mp===m)&&(!c||l.cr===c)&&(!q||(l.n+l.t+(l.e||'')).toLowerCase().includes(q)));
+  },
+  linha(l){
+    const txt = msgFor(l,'R',USER.nome);
+    return `<tr><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td><td class="et">${esc(l.mp)}</td>
+    <td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td><td>${l.si!=null?l.si+' d':'—'}</td>
+    <td class="et">${esc(l.cr)}</td><td>${msgCell(txt)}</td></tr>`;
+  }
+});
+document.getElementById('docRc').onclick = ()=>baixaWord('Mude_Recuperacao_Perdidos.doc','Recuperação de Perdidos',
+  `${USER.admin?(document.getElementById('selCorretorR').value||'Todos os corretores'):USER.nome} · ${document.getElementById('selMotivo').value||'Todos os motivos'} · Base de ${hoje()} · ${tRc._rows.length} contatos`,
+  [{cab:['Cliente','Contato','Motivo','Origem','Valor','Perdido há','Corretor original','Mensagem sugerida'],
+    linhas:tRc._rows.map(l=>[l.n, l.t+(l.e?' · '+l.e:''), l.mp, l.o, l.v?fmtBRL(l.v):'—', l.si!=null?l.si+' d':'—', l.cr, msgFor(l,'R',USER.nome)])}]);
+document.getElementById('csvRc').onclick = ()=>baixaCSV('recuperacao_perdidos_mude.csv',
+  ['Cliente','Telefone','Email','Motivo','Origem','Valor','Perdido ha (d)','Corretor original','Mensagem'],
+  tRc._rows, l=>[l.n,l.t,l.e,l.mp,l.o,l.v||'',l.si??'',l.cr,msgFor(l,'R',USER.nome)].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
+
+/* ---------- vendas ---------- */
+if(USER.admin){
+  const cs = [...new Set(D.gn.map(l=>l.cr))].sort();
+  document.getElementById('selCorretorG').innerHTML = `<option value="">Todos os corretores</option>`+cs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+document.getElementById('selOrigemG').innerHTML = `<option value="">Todas as origens</option>`+[...new Set(D.gn.map(l=>l.o))].sort().map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+const colsGn = [
+  {h:'Cliente', k:l=>l.n},
+  {h:'Origem', k:l=>l.o},
+  {h:'Valor', k:l=>l.v, desc:true},
+  {h:'Criado em', k:l=>dBR(l.cd), desc:true},
+  {h:'Fechamento', k:l=>dBR(l.df), desc:true},
+  {h:'Corretor', k:l=>l.cr}];
+const tGn = montaTabela({
+  tb:'#tbGn', mais:'maisGn', inputs:['selCorretorG','selOrigemG','buscaGn'], cols:colsGn, sortC:4, sortD:-1,
+  filtrar(){
+    const c = USER.admin? document.getElementById('selCorretorG').value : USER.nome;
+    const o = document.getElementById('selOrigemG').value;
+    const q = document.getElementById('buscaGn').value.toLowerCase();
+    return meuGn().filter(l=>(!c||l.cr===c)&&(!o||l.o===o)&&(!q||(l.n+(l.cr||'')+(l.o||'')).toLowerCase().includes(q)));
+  },
+  linha:l=>`<tr><td class="nome">${esc(l.n)}</td><td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td>
+    <td class="et">${l.cd}</td><td class="et">${l.df||'—'}</td><td class="et">${esc(l.cr)}</td></tr>`
+});
+document.getElementById('docGn').onclick = ()=>baixaWord('Mude_Vendas_Realizadas.doc','Vendas Realizadas',
+  `${USER.admin?(document.getElementById('selCorretorG').value||'Todos os corretores'):USER.nome} · Base de ${hoje()} · ${tGn._rows.length} vendas`,
+  [{cab:['Cliente','Origem','Valor','Criado em','Fechamento','Corretor'],
+    linhas:tGn._rows.map(l=>[l.n,l.o,l.v?fmtBRL(l.v):'—',l.cd,l.df||'—',l.cr])}]);
+document.getElementById('csvGn').onclick = ()=>baixaCSV('vendas_mude.csv',
+  ['Cliente','Origem','Valor','Criado em','Fechamento','Corretor'],
+  tGn._rows, l=>[l.n,l.o,l.v||'',l.cd,l.df||'',l.cr].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
+
+/* ---------- administração ---------- */
+if(USER.admin){
+  document.querySelector('#tbCred tbody').innerHTML = D.cred.map((c,i)=>`<tr>
+    <td class="nome">${esc(c.nome)}</td><td>${esc(c.login)}</td>
+    <td><span id="pw${i}">••••••••</span> <button class="btn2" onclick="var s=document.getElementById('pw${i}');if(s.dataset.on){s.textContent='••••••••';delete s.dataset.on}else{s.textContent=this.dataset.p;s.dataset.on=1}" data-p="${esc(c.senha)}">&#128065;</button></td>
+    <td class="et">${esc(c.email)}</td><td class="et">${c.admin?'Administrador':'Corretor'}</td></tr>`).join('');
+  document.getElementById('fontesInfo').innerHTML = '<b style="color:var(--ouro2)">Arquivos já importados:</b> '+
+    (D.sum.fontes||[]).map(f=>`${esc(f.arquivo)} (${f.linhas} linhas, ${f.novos} novos, importado em ${f.importado_em})`).join(' · ');
+}
+
+tAb.render(); tRc.render(); tGn.render();
+}
+/* login salvo: preenche o campo (a senha é sempre solicitada) */
+const salvoLg = localStorage.getItem('mudeUser');
+if(salvoLg) document.getElementById('lgUser').value = salvoLg;
+</script>
+</body>
+</html>
