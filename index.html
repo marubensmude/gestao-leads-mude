@@ -371,8 +371,22 @@ function baixaCSV(nome, cab, rows, linha){
   a.download = nome; a.click();
 }
 /* ---- exportação Word (doc editável) ---- */
+const TAGCOR={'AGIR HOJE':'#b04a3c','FOLLOW-UP DA SEMANA':'#8a6d2f','REAQUECER':'#3c6a9c','REQUALIFICAR':'#666666','RECUPERAÇÃO':'#8a6d2f'};
+function fichaHTML(f){
+  const cor = Object.keys(TAGCOR).find(k=>f.tag.startsWith(k));
+  return `<table cellspacing="0" cellpadding="0" style="width:100%;margin:0 0 10pt;page-break-inside:avoid;border:1pt solid #d8d3c8;border-left:3pt solid #c9a45c;border-collapse:collapse"><tr><td style="padding:8pt 11pt">
+    <p style="margin:0"><span style="font-size:11.5pt;font-weight:bold;color:#111">${esc(f.titulo)}</span>&nbsp;&nbsp;<span style="font-size:8pt;font-weight:bold;letter-spacing:1pt;color:${TAGCOR[cor]||'#8a6d2f'}">${esc(f.tag)}</span></p>
+    <p style="margin:3pt 0 0;font-size:9.5pt;color:#333"><b>${esc(f.contato)}</b></p>
+    <p style="margin:3pt 0 0;font-size:8.5pt;color:#666">${esc(f.meta)}</p>
+    ${f.acao?`<p style="margin:6pt 0 0;font-size:9pt;color:#333;line-height:1.35"><b style="color:#8a6d2f">Ação:</b> ${esc(f.acao)}</p>`:''}
+    <table cellspacing="0" cellpadding="0" style="width:100%;margin:6pt 0 0;border-collapse:collapse"><tr><td style="background:#f5f2ec;border:1pt solid #e5ddc9;padding:6pt 9pt"><p style="margin:0;font-size:9pt;font-style:italic;color:#333;line-height:1.4">&ldquo;${esc(f.msg)}&rdquo;</p></td></tr></table>
+    <p style="margin:6pt 0 0;font-size:8.5pt;color:#666">&#9744; Contatado &nbsp;&nbsp; &#9744; Respondeu &nbsp;&nbsp; &#9744; Pr&oacute;xima tarefa agendada no CRM &nbsp;&nbsp; Anota&ccedil;&otilde;es: ________________________________</p>
+  </td></tr></table>`;
+}
 function baixaWord(nomeArq, titulo, subtitulo, blocos){
-  const tabelas = blocos.map(b=>`
+  const tabelas = blocos.map(b=> b.fichas ? `
+    ${b.titulo?`<h2 style="font-family:Georgia,serif;font-size:14pt;color:#8a6d2f;margin:22pt 0 8pt">${esc(b.titulo)}</h2>`:''}
+    ${b.fichas.map(fichaHTML).join('')}` : `
     ${b.titulo?`<h2 style="font-family:Georgia,serif;font-size:14pt;color:#8a6d2f;margin:22pt 0 8pt">${esc(b.titulo)}</h2>`:''}
     ${b.nota?`<p style="font-size:9.5pt;color:#666;margin:0 0 8pt">${esc(b.nota)}</p>`:''}
     <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse;width:100%;font-size:9pt;border:1pt solid #bbb">
@@ -573,11 +587,18 @@ const tAb = montaTabela({
   }
 });
 const abExpRows = ()=>tAb._rows.map(l=>[BK[l.b].t+' · score '+l.s, l.n, l.t+(l.e?' · '+l.e:''), l.et, l.o, l.v?fmtBRL(l.v):'—', (l.i>=0?l.i+' d':'—')+' / '+(l.si!=null?l.si+' d':'—'), analiseCell(l), msgFor(l,l.b,USER.nome)]);
-document.getElementById('docAb').onclick = ()=>baixaWord('Mude_Plano_de_Trabalho.doc','Plano de Trabalho · Atendimentos Abertos',
-  `${USER.admin?(selC.value||'Todos os corretores'):USER.nome} · Base de ${hoje()} · ${tAb._rows.length} atendimentos · ordem atual da tela`,
-  [{nota:'Colunas de tempo: dias de inatividade do lead (CRM) / dias sem interação do corretor.',
-    cab:['Faixa / Prioridade','Cliente','Contato','Etapa','Origem','Valor','Inativo / Sem interação','Análise e ação','Mensagem sugerida'],
-    linhas:abExpRows()}]);
+document.getElementById('docAb').onclick = ()=>{
+  const rows=tAb._rows, res={A:0,B:0,C:0,D:0}; rows.forEach(l=>res[l.b]++);
+  baixaWord('Mude_Plano_de_Trabalho.doc','Plano de Trabalho · Atendimentos Abertos',
+    `${USER.admin?(selC.value||'Todos os corretores'):USER.nome} · Base de ${hoje()} · ${rows.length} atendimentos (Agir hoje: ${res.A} · Semana: ${res.B} · Reaquecer: ${res.C} · Requalificar: ${res.D}) · ordem atual da tela`,
+    [{fichas: rows.map(l=>({
+      titulo:l.n,
+      tag:`${BK[l.b].t.toUpperCase()} · PRIORIDADE ${l.s}`,
+      contato:[l.t,l.e].filter(Boolean).join(' · ')||'sem contato registrado',
+      meta:[`Etapa: ${l.et}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.i>=0?`Inativo: ${l.i} d`:null, l.si!=null?`Sem interação: ${l.si} d`:null, l.pt?`Tarefa: ${l.pt}`:null, `Criado em: ${l.cd}`, USER.admin?`Corretor: ${l.cr}`:null].filter(Boolean).join('   |   '),
+      acao:analiseCell(l),
+      msg:msgFor(l,l.b,USER.nome)}))}]);
+};
 document.getElementById('csvAb').onclick = ()=>baixaCSV('plano_de_trabalho_mude.csv',
   ['Score','Faixa','Cliente','Telefone','Email','Etapa','Origem','Valor','Inativo (d)','Sem interacao (d)','Analise','Mensagem','Corretor'],
   tAb._rows, l=>[l.s,BK[l.b].t,l.n,l.t,l.e,l.et,l.o,l.v||'',l.i,l.si??'',analiseCell(l),msgFor(l,l.b,USER.nome),l.cr].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
@@ -615,8 +636,13 @@ const tRc = montaTabela({
 });
 document.getElementById('docRc').onclick = ()=>baixaWord('Mude_Recuperacao_Perdidos.doc','Recuperação de Perdidos',
   `${USER.admin?(document.getElementById('selCorretorR').value||'Todos os corretores'):USER.nome} · ${document.getElementById('selMotivo').value||'Todos os motivos'} · Base de ${hoje()} · ${tRc._rows.length} contatos`,
-  [{cab:['Cliente','Contato','Motivo','Origem','Valor','Perdido há','Corretor original','Mensagem sugerida'],
-    linhas:tRc._rows.map(l=>[l.n, l.t+(l.e?' · '+l.e:''), l.mp, l.o, l.v?fmtBRL(l.v):'—', l.si!=null?l.si+' d':'—', l.cr, msgFor(l,'R',USER.nome)])}]);
+  [{fichas: tRc._rows.map(l=>({
+      titulo:l.n,
+      tag:'RECUPERAÇÃO',
+      contato:[l.t,l.e].filter(Boolean).join(' · ')||'sem contato registrado',
+      meta:[`Motivo: ${l.mp}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.si!=null?`Perdido há: ${l.si} d`:null, `Corretor original: ${l.cr}`].filter(Boolean).join('   |   '),
+      acao:'Reativação sem pressão: relembrar o interesse anterior e sondar o momento atual. Se responder, reabrir o atendimento no CRM.',
+      msg:msgFor(l,'R',USER.nome)}))}]);
 document.getElementById('csvRc').onclick = ()=>baixaCSV('recuperacao_perdidos_mude.csv',
   ['Cliente','Telefone','Email','Motivo','Origem','Valor','Perdido ha (d)','Corretor original','Mensagem'],
   tRc._rows, l=>[l.n,l.t,l.e,l.mp,l.o,l.v||'',l.si??'',l.cr,msgFor(l,'R',USER.nome)].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
