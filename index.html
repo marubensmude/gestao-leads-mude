@@ -71,6 +71,8 @@ tr:hover td{background:#202026}
 .reco{color:var(--ouro2);font-size:12px;margin:0 0 12px;letter-spacing:.02em}
 .met p{color:#cfccc4;font-size:13.5px;line-height:1.75;margin-bottom:12px}
 .met b{color:var(--ouro2);font-weight:600}
+.tin{background:var(--preto2);border:1px solid var(--borda);color:var(--branco);padding:6px 8px;border-radius:6px;font-size:12.5px;min-width:130px}
+#tbCred select{padding:6px 8px}
 footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);font-size:11.5px;letter-spacing:.05em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .hide{display:none!important}
 /* login */
@@ -111,7 +113,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
     <button class="btn" id="lgBtn">Entrar</button>
     <div class="lerr" id="lgErr"></div>
     <span class="lesq" id="lgEsq">Esqueci minha senha</span>
-    <div class="linfo hide" id="lgInfo">A recuperação de senha é feita com o administrador: <b style="color:var(--ouro2)">Mário Rubens · mario@mudeimobiliaria.com.br</b>. Ele consulta e informa seu acesso pela aba Administração da plataforma.</div>
+    <div class="linfo hide" id="lgInfo">Sua senha é pessoal e protege os seus dados; por segurança, ela não pode ser redefinida automaticamente. <a href="mailto:mario@mudeimobiliaria.com.br?subject=Nova%20senha%20%C2%B7%20Plataforma%20de%20Follow-up&body=Ol%C3%A1%2C%20M%C3%A1rio.%20Esqueci%20minha%20senha%20da%20Plataforma%20de%20Follow-up.%20Meu%20login%3A%20" style="color:var(--ouro2)">Clique aqui para pedir uma nova senha por e-mail</a> ao administrador (Mário Rubens), que gera e publica o novo acesso na hora.</div>
   </div>
 </div>
 
@@ -199,8 +201,18 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 
 <section id="admin" class="hide">
   <div class="box"><h3>Acessos dos corretores</h3>
-    <div class="hint">Cada corretor enxerga somente os próprios atendimentos. Senhas visíveis apenas nesta aba. Para trocar uma senha ou incluir corretor, solicite a atualização da plataforma.</div>
-    <div class="tbox"><table id="tbCred"><thead><tr><th>Nome</th><th>Login</th><th>Senha</th><th>E-mail</th><th>Perfil</th></tr></thead><tbody></tbody></table></div>
+    <div class="hint">Cada corretor enxerga somente os próprios atendimentos. Edite e-mail, perfil e senha, inclua ou exclua corretores. As alterações só entram no ar após <b style="color:var(--ouro2)">Publicar alterações</b>.</div>
+    <div class="tbox"><table id="tbCred"><thead><tr><th>Nome</th><th>Login</th><th>Senha</th><th>E-mail</th><th>Perfil</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="controls" style="margin-top:14px">
+      <button class="btn" id="addCred">+ Adicionar corretor</button>
+      <button class="btn" id="dlCred">Baixar acessos (CSV)</button>
+    </div>
+    <div class="controls">
+      <input type="password" id="ghTok" placeholder="Token do GitHub (github_pat_...)" style="min-width:300px">
+      <button class="btn" id="pubCred">Publicar alterações</button>
+    </div>
+    <div class="hint" id="pubStatus"></div>
+    <div class="hint">O token fica salvo apenas neste navegador e grava os arquivos cifrados direto no repositório. Após publicar, baixe o CSV de acessos e guarde-o; envie-o junto com o próximo export do CRM para manter a rotina de atualização em sincronia.</div>
   </div>
   <div class="box"><h3>Gestão da base incremental</h3>
     <div class="hint" id="fontesInfo"></div>
@@ -209,7 +221,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 </section>
 
 </main>
-<footer><span>Mude Imóveis · Dourados-MS · Uso interno</span><span>Plataforma de Follow-up · v3.0 · Online</span></footer>
+<footer><span>Mude Imóveis · Dourados-MS · Uso interno</span><span>Plataforma de Follow-up · v3.1 · Online</span></footer>
 </div>
 
 <script>
@@ -383,6 +395,84 @@ function baixaWord(nomeArq, titulo, subtitulo, blocos){
   a.download = nomeArq; a.click();
 }
 const hoje = ()=>D.sum.gerado;
+
+/* ============ criptografia (gravação) e GitHub ============ */
+function b64bytes(a){let r='';const CH=32768;for(let i=0;i<a.length;i+=CH){r+=String.fromCharCode.apply(null,a.subarray(i,i+CH));}return btoa(r);}
+async function cifra(obj, senha){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(senha),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:310000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt']);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(JSON.stringify(obj))));
+  return {v:1,iter:310000,salt:b64bytes(salt),iv:b64bytes(iv),ct:b64bytes(ct)};
+}
+const GH='https://api.github.com/repos/marubensmude/gestao-leads-mude/contents/';
+const ghHead=t=>({'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json'});
+async function ghSha(path,t){const r=await fetch(GH+path,{headers:ghHead(t),cache:'no-store'});if(r.status===404)return null;if(!r.ok)throw new Error('GitHub respondeu '+r.status+' (confira o token)');return (await r.json()).sha;}
+async function ghPut(path,str,t,msg){const sha=await ghSha(path,t);const body={message:msg,content:b64bytes(new TextEncoder().encode(str))};if(sha)body.sha=sha;const r=await fetch(GH+path,{method:'PUT',headers:ghHead(t),body:JSON.stringify(body)});if(!r.ok)throw new Error('Falha ao gravar '+path+' ('+r.status+')');}
+async function ghDel(path,t,msg){const sha=await ghSha(path,t);if(!sha)return;const r=await fetch(GH+path,{method:'DELETE',headers:ghHead(t),body:JSON.stringify({message:msg,sha:sha})});if(!r.ok)throw new Error('Falha ao excluir '+path+' ('+r.status+')');}
+
+/* ============ administração: gestão de acessos ============ */
+let CRED=null;
+function loginDe(nome){const p=(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().split(/\s+/);return p.length>1?p[0]+'.'+p[p.length-1]:(p[0]||'');}
+function gerarSenha(nome){const p=primNome(nome||'user').normalize('NFD').replace(/[\u0300-\u036f]/g,'');return 'Mude'+p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()+'#'+(1000+Math.floor(Math.random()*9000));}
+function adminUI(){
+  CRED = D.cred.map(c=>({...c}));
+  const tok=document.getElementById('ghTok'); tok.value = localStorage.getItem('mudeGhTok')||'';
+  document.getElementById('addCred').onclick=()=>{CRED.push({login:'',nome:'',email:'',senha:'',admin:false,_novo:true});renderCred();};
+  document.getElementById('dlCred').onclick=()=>baixaCSV('acessos_mude.csv',['Nome','Login','Senha','E-mail','Perfil'],
+    CRED.filter(c=>!c._del),c=>[c.nome,c.login,c.senha,c.email,c.admin?'Administrador':'Corretor'].map(x=>'"'+String(x??'').replace(/"/g,"'")+'"').join(';'));
+  document.getElementById('pubCred').onclick=publicar;
+  renderCred();
+}
+function renderCred(){
+  const nomes=[...new Set([...D.ab,...D.rc,...D.gn].map(l=>l.cr))].sort();
+  document.querySelector('#tbCred tbody').innerHTML = CRED.map((c,i)=>{
+    if(c._del) return `<tr style="opacity:.45"><td class="nome" style="text-decoration:line-through">${esc(c.nome)}</td><td>${esc(c.login)}</td><td colspan="3" class="et">acesso será removido na publicação</td><td><button class="btn2" onclick="CRED[${i}]._del=false;renderCred()">Restaurar</button></td></tr>`;
+    const nomeCell = c._novo? `<select onchange="CRED[${i}].nome=this.value;CRED[${i}].login=loginDe(this.value);CRED[${i}].senha=CRED[${i}].senha||gerarSenha(this.value);renderCred()"><option value="">— escolher corretor —</option>${nomes.map(n=>`<option ${c.nome===n?'selected':''}>${esc(n)}</option>`).join('')}</select>` : `<span class="nome">${esc(c.nome)}</span>`;
+    return `<tr>
+      <td>${nomeCell}</td>
+      <td>${c._novo?`<input class="tin" style="min-width:110px" value="${esc(c.login)}" onchange="CRED[${i}].login=this.value.trim().toLowerCase()">`:esc(c.login)}</td>
+      <td style="white-space:nowrap"><input class="tin" type="password" id="cpw${i}" style="min-width:110px" value="${esc(c.senha)}" onchange="CRED[${i}].senha=this.value">
+        <button class="btn2" title="Visualizar" onclick="var x=document.getElementById('cpw${i}');x.type=x.type==='password'?'text':'password'">&#128065;</button>
+        <button class="btn2" title="Gerar nova senha" onclick="CRED[${i}].senha=gerarSenha(CRED[${i}].nome);renderCred()">Nova</button></td>
+      <td><input class="tin" value="${esc(c.email)}" onchange="CRED[${i}].email=this.value.trim()"></td>
+      <td><select onchange="CRED[${i}].admin=this.value==='1'"><option value="0"${c.admin?'':' selected'}>Corretor</option><option value="1"${c.admin?' selected':''}>Administrador</option></select></td>
+      <td>${c.login==='mario'?'':`<button class="btn2" onclick="CRED[${i}]._del=true;renderCred()">Remover</button>`}</td></tr>`;
+  }).join('');
+}
+async function publicar(){
+  const st=document.getElementById('pubStatus');
+  const tok=document.getElementById('ghTok').value.trim();
+  if(!tok){st.textContent='Informe o token do GitHub para publicar.';return;}
+  const ativos=CRED.filter(c=>!c._del);
+  if(!ativos.some(c=>c.admin)){st.textContent='É preciso manter ao menos um administrador.';return;}
+  for(const c of ativos){
+    if(!c.nome||!c.login){st.textContent='Preencha nome e login de todos os corretores.';return;}
+    if(!c.senha||c.senha.length<8){st.textContent='A senha de '+c.nome+' precisa de ao menos 8 caracteres.';return;}
+  }
+  const logins=ativos.map(c=>c.login);
+  if(new Set(logins).size!==logins.length){st.textContent='Há logins duplicados.';return;}
+  localStorage.setItem('mudeGhTok',tok);
+  try{
+    let n=0;
+    const credPub=ativos.map(x=>({login:x.login,nome:x.nome,email:x.email,senha:x.senha,admin:x.admin}));
+    for(const c of ativos){
+      n++; st.textContent=`Publicando ${n} de ${ativos.length}: ${c.login}...`;
+      const payload = c.admin ? {user:{login:c.login,nome:c.nome,admin:true},sum:D.sum,ab:D.ab,rc:D.rc,gn:D.gn,cred:credPub}
+        : {user:{login:c.login,nome:c.nome,admin:false},sum:D.sum,ab:D.ab.filter(l=>l.cr===c.nome),rc:D.rc.filter(l=>l.cr===c.nome),gn:D.gn.filter(l=>l.cr===c.nome)};
+      const enc=await cifra(payload,c.senha);
+      await ghPut('data/'+encodeURIComponent(c.login)+'.json',JSON.stringify(enc),tok,'Atualiza acesso de '+c.login);
+    }
+    for(const c of CRED.filter(x=>x._del)){
+      st.textContent='Removendo '+c.login+'...';
+      await ghDel('data/'+encodeURIComponent(c.login)+'.json',tok,'Remove acesso de '+c.login);
+    }
+    CRED=ativos.map(c=>({...c,_novo:false}));
+    D.cred=CRED.map(c=>({...c}));
+    renderCred();
+    st.innerHTML='<b style="color:var(--verde)">Publicado com sucesso.</b> As alterações entram no ar em 1 a 2 minutos. Baixe o CSV de acessos atualizado e guarde-o.';
+  }catch(e){st.textContent='Erro: '+e.message;}
+}
 
 /* ================= boot (após login) ================= */
 function boot(){
@@ -565,10 +655,7 @@ document.getElementById('csvGn').onclick = ()=>baixaCSV('vendas_mude.csv',
 
 /* ---------- administração ---------- */
 if(USER.admin){
-  document.querySelector('#tbCred tbody').innerHTML = D.cred.map((c,i)=>`<tr>
-    <td class="nome">${esc(c.nome)}</td><td>${esc(c.login)}</td>
-    <td><span id="pw${i}">••••••••</span> <button class="btn2" onclick="var s=document.getElementById('pw${i}');if(s.dataset.on){s.textContent='••••••••';delete s.dataset.on}else{s.textContent=this.dataset.p;s.dataset.on=1}" data-p="${esc(c.senha)}">&#128065;</button></td>
-    <td class="et">${esc(c.email)}</td><td class="et">${c.admin?'Administrador':'Corretor'}</td></tr>`).join('');
+  adminUI();
   document.getElementById('fontesInfo').innerHTML = '<b style="color:var(--ouro2)">Arquivos já importados:</b> '+
     (D.sum.fontes||[]).map(f=>`${esc(f.arquivo)} (${f.linhas} linhas, ${f.novos} novos, importado em ${f.importado_em})`).join(' · ');
 }
