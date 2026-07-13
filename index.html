@@ -151,11 +151,12 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 </section>
 
 <section id="plano" class="hide">
-  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento.</div>
+  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento. O <b style="color:var(--ouro2)">Status da ação</b> é seu registro de trabalho: fica salvo neste navegador e não substitui a anotação no CRM, que continua sendo o registro oficial.</div>
   <div class="reco">Recomendação de trabalho: mantenha a ordenação por Prioridade e zere a faixa "Agir hoje" antes das demais; nas faixas frias, ordene por Valor para começar pelos tickets maiores.</div>
   <div class="controls">
     <select id="selCorretor" class="soAdmin"></select>
     <input type="text" id="buscaAb" placeholder="Buscar por nome, telefone ou e-mail">
+    <select id="selStatus"><option value="">Ação: todas</option><option value="sem">Sem registro</option><option value="com">Com registro</option></select>
     <button class="btn" id="docAb">Exportar Word</button>
     <button class="btn" id="csvAb">Baixar CSV</button>
   </div>
@@ -425,6 +426,24 @@ async function ghSha(path,t){const r=await fetch(GH+path,{headers:ghHead(t),cach
 async function ghPut(path,str,t,msg){const sha=await ghSha(path,t);const body={message:msg,content:b64bytes(new TextEncoder().encode(str))};if(sha)body.sha=sha;const r=await fetch(GH+path,{method:'PUT',headers:ghHead(t),body:JSON.stringify(body)});if(!r.ok)throw new Error('Falha ao gravar '+path+' ('+r.status+')');}
 async function ghDel(path,t,msg){const sha=await ghSha(path,t);if(!sha)return;const r=await fetch(GH+path,{method:'DELETE',headers:ghHead(t),body:JSON.stringify({message:msg,sha:sha})});if(!r.ok)throw new Error('Falha ao excluir '+path+' ('+r.status+')');}
 
+/* ============ status da ação (registro local de trabalho) ============ */
+const ST_OPCOES=['Contatado','Aguardando resposta','Retorno agendado','Sem sucesso no contato','Atualizado no CRM'];
+const leadKey=l=>((l.n||'')+'|'+(l.w||'')+'|'+(l.cd||'')).toLowerCase();
+let ACAO={};
+try{ACAO=JSON.parse(localStorage.getItem('mudeAcao')||'{}');}catch(e){ACAO={};}
+function acaoDe(l){return ACAO[leadKey(l)]||null;}
+function registraAcao(kEnc,v,spanId){
+  const k=decodeURIComponent(kEnc);
+  if(v){ACAO[k]={s:v,d:new Date().toLocaleDateString('pt-BR')};}else{delete ACAO[k];}
+  localStorage.setItem('mudeAcao',JSON.stringify(ACAO));
+  const sp=document.getElementById(spanId); if(sp)sp.textContent=v?('em '+(ACAO[k]||{}).d):'';
+}
+function statusCell(l,uid){
+  const a=acaoDe(l), kEnc=encodeURIComponent(leadKey(l));
+  return `<select class="tin" style="min-width:150px" onchange="registraAcao('${kEnc}',this.value,'std${uid}')"><option value="">—</option>${ST_OPCOES.map(o=>`<option${a&&a.s===o?' selected':''}>${o}</option>`).join('')}</select><div class="meta2" id="std${uid}">${a?'em '+a.d:''}</div>`;
+}
+const acaoTxt=l=>{const a=acaoDe(l);return a?`${a.s} (${a.d})`:'';};
+
 /* ============ administração: gestão de acessos ============ */
 let CRED=null;
 function loginDe(nome){const p=(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().split(/\s+/);return p.length>1?p[0]+'.'+p[p.length-1]:(p[0]||'');}
@@ -565,25 +584,28 @@ const colsAb = [
   {h:'Inativo', k:l=>l.i, desc:true},
   {h:'Sem interação', k:l=>l.si, desc:true},
   {h:'Faixa', k:l=>l.b},
+  {h:'Status da ação', k:l=>{const a=acaoDe(l);return a?a.s:'';}},
   {h:'Análise e ação', k:l=>l.b},
   {h:'Mensagem sugerida', k:l=>l.n}];
 const tAb = montaTabela({
-  tb:'#tbAb', mais:'maisAb', inputs:['selCorretor','buscaAb'], cols:colsAb, sortC:0, sortD:-1,
+  tb:'#tbAb', mais:'maisAb', inputs:['selCorretor','buscaAb','selStatus'], cols:colsAb, sortC:0, sortD:-1,
   filtrar(){
     const c = USER.admin? selC.value : USER.nome;
     const q = document.getElementById('buscaAb').value.toLowerCase();
+    const stF = document.getElementById('selStatus').value;
     let base = meuAb().filter(l=>!c||l.cr===c);
     renderBuckets(base);
     if(bkSel) base = base.filter(l=>l.b===bkSel);
+    if(stF) base = base.filter(l=> stF==='com' ? !!acaoDe(l) : !acaoDe(l));
     if(q) base = base.filter(l=>(l.n+l.t+(l.e||'')).toLowerCase().includes(q));
     return base;
   },
-  linha(l){
+  linha(l,i){
     const txt = msgFor(l,l.b,USER.nome);
     return `<tr><td class="sc">${l.s}</td><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td>
     <td class="et">${esc(l.et)}</td><td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td>
     <td>${l.i>=0?l.i+' d':'—'}</td><td>${l.si!=null?l.si+' d':'—'}</td>
-    <td><span class="tag t${l.b}">${BK[l.b].t}</span></td><td class="acao">${esc(analiseCell(l))}</td><td>${msgCell(txt)}</td></tr>`;
+    <td><span class="tag t${l.b}">${BK[l.b].t}</span></td><td>${statusCell(l,'A'+i)}</td><td class="acao">${esc(analiseCell(l))}</td><td>${msgCell(txt)}</td></tr>`;
   }
 });
 const abExpRows = ()=>tAb._rows.map(l=>[BK[l.b].t+' · score '+l.s, l.n, l.t+(l.e?' · '+l.e:''), l.et, l.o, l.v?fmtBRL(l.v):'—', (l.i>=0?l.i+' d':'—')+' / '+(l.si!=null?l.si+' d':'—'), analiseCell(l), msgFor(l,l.b,USER.nome)]);
@@ -595,13 +617,13 @@ document.getElementById('docAb').onclick = ()=>{
       titulo:l.n,
       tag:`${BK[l.b].t.toUpperCase()} · PRIORIDADE ${l.s}`,
       contato:[l.t,l.e].filter(Boolean).join(' · ')||'sem contato registrado',
-      meta:[`Etapa: ${l.et}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.i>=0?`Inativo: ${l.i} d`:null, l.si!=null?`Sem interação: ${l.si} d`:null, l.pt?`Tarefa: ${l.pt}`:null, `Criado em: ${l.cd}`, USER.admin?`Corretor: ${l.cr}`:null].filter(Boolean).join('   |   '),
+      meta:[`Etapa: ${l.et}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.i>=0?`Inativo: ${l.i} d`:null, l.si!=null?`Sem interação: ${l.si} d`:null, l.pt?`Tarefa: ${l.pt}`:null, `Criado em: ${l.cd}`, acaoTxt(l)?`Status da ação: ${acaoTxt(l)}`:null, USER.admin?`Corretor: ${l.cr}`:null].filter(Boolean).join('   |   '),
       acao:analiseCell(l),
       msg:msgFor(l,l.b,USER.nome)}))}]);
 };
 document.getElementById('csvAb').onclick = ()=>baixaCSV('plano_de_trabalho_mude.csv',
-  ['Score','Faixa','Cliente','Telefone','Email','Etapa','Origem','Valor','Inativo (d)','Sem interacao (d)','Analise','Mensagem','Corretor'],
-  tAb._rows, l=>[l.s,BK[l.b].t,l.n,l.t,l.e,l.et,l.o,l.v||'',l.i,l.si??'',analiseCell(l),msgFor(l,l.b,USER.nome),l.cr].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
+  ['Score','Faixa','Cliente','Telefone','Email','Etapa','Origem','Valor','Inativo (d)','Sem interacao (d)','Status da acao','Analise','Mensagem','Corretor'],
+  tAb._rows, l=>[l.s,BK[l.b].t,l.n,l.t,l.e,l.et,l.o,l.v||'',l.i,l.si??'',acaoTxt(l),analiseCell(l),msgFor(l,l.b,USER.nome),l.cr].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
 
 /* ---------- recuperação ---------- */
 const motivosR = [...new Set(D.rc.map(l=>l.mp))];
@@ -618,6 +640,7 @@ const colsRc = [
   {h:'Valor', k:l=>l.v, desc:true},
   {h:'Perdido há', k:l=>l.si, desc:true},
   {h:'Corretor original', k:l=>l.cr},
+  {h:'Status da ação', k:l=>{const a=acaoDe(l);return a?a.s:'';}},
   {h:'Mensagem sugerida', k:l=>l.n}];
 const tRc = montaTabela({
   tb:'#tbRc', mais:'maisRc', inputs:['selMotivo','selCorretorR','buscaRc'], cols:colsRc,
@@ -627,11 +650,11 @@ const tRc = montaTabela({
     const q = document.getElementById('buscaRc').value.toLowerCase();
     return meuRc().filter(l=>(!m||l.mp===m)&&(!c||l.cr===c)&&(!q||(l.n+l.t+(l.e||'')).toLowerCase().includes(q)));
   },
-  linha(l){
+  linha(l,i){
     const txt = msgFor(l,'R',USER.nome);
     return `<tr><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td><td class="et">${esc(l.mp)}</td>
     <td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td><td>${l.si!=null?l.si+' d':'—'}</td>
-    <td class="et">${esc(l.cr)}</td><td>${msgCell(txt)}</td></tr>`;
+    <td class="et">${esc(l.cr)}</td><td>${statusCell(l,'R'+i)}</td><td>${msgCell(txt)}</td></tr>`;
   }
 });
 document.getElementById('docRc').onclick = ()=>baixaWord('Mude_Recuperacao_Perdidos.doc','Recuperação de Perdidos',
@@ -640,12 +663,12 @@ document.getElementById('docRc').onclick = ()=>baixaWord('Mude_Recuperacao_Perdi
       titulo:l.n,
       tag:'RECUPERAÇÃO',
       contato:[l.t,l.e].filter(Boolean).join(' · ')||'sem contato registrado',
-      meta:[`Motivo: ${l.mp}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.si!=null?`Perdido há: ${l.si} d`:null, `Corretor original: ${l.cr}`].filter(Boolean).join('   |   '),
+      meta:[`Motivo: ${l.mp}`,`Origem: ${l.o}`, l.v?`Valor: ${fmtBRL(l.v)}`:null, l.si!=null?`Perdido há: ${l.si} d`:null, `Corretor original: ${l.cr}`, acaoTxt(l)?`Status da ação: ${acaoTxt(l)}`:null].filter(Boolean).join('   |   '),
       acao:'Reativação sem pressão: relembrar o interesse anterior e sondar o momento atual. Se responder, reabrir o atendimento no CRM.',
       msg:msgFor(l,'R',USER.nome)}))}]);
 document.getElementById('csvRc').onclick = ()=>baixaCSV('recuperacao_perdidos_mude.csv',
-  ['Cliente','Telefone','Email','Motivo','Origem','Valor','Perdido ha (d)','Corretor original','Mensagem'],
-  tRc._rows, l=>[l.n,l.t,l.e,l.mp,l.o,l.v||'',l.si??'',l.cr,msgFor(l,'R',USER.nome)].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
+  ['Cliente','Telefone','Email','Motivo','Origem','Valor','Perdido ha (d)','Corretor original','Status da acao','Mensagem'],
+  tRc._rows, l=>[l.n,l.t,l.e,l.mp,l.o,l.v||'',l.si??'',l.cr,acaoTxt(l),msgFor(l,'R',USER.nome)].map(x=>`"${String(x??'').replace(/"/g,"'")}"`).join(';'));
 
 /* ---------- vendas ---------- */
 if(USER.admin){
