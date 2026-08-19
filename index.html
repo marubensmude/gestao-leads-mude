@@ -151,7 +151,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 </section>
 
 <section id="plano" class="hide">
-  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento. O <b style="color:var(--ouro2)">Status da ação</b> é seu registro de trabalho: fica salvo neste navegador e não substitui a anotação no CRM, que continua sendo o registro oficial.</div>
+  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento. Em atendimentos transferidos, a plataforma preserva a inatividade real anterior à troca de responsável, porque o CRM zera esse contador na transferência. O <b style="color:var(--ouro2)">Status da ação</b> é seu registro de trabalho: fica salvo neste navegador e não substitui a anotação no CRM, que continua sendo o registro oficial.</div>
   <div class="reco">Recomendação de trabalho: mantenha a ordenação por Prioridade e zere a faixa "Agir hoje" antes das demais; nas faixas frias, ordene por Valor para começar pelos tickets maiores.</div>
   <div class="controls">
     <select id="selCorretor" class="soAdmin"></select>
@@ -217,6 +217,12 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
   </div>
   <div class="box"><h3>Gestão da base incremental</h3>
     <div class="hint" id="fontesInfo"></div>
+    <div class="controls" style="margin:4px 0 10px">
+      <input type="file" id="csvIn" accept=".csv,.json,text/csv,application/json" multiple style="max-width:340px">
+      <button class="btn" id="impBtn">Importar e recalcular</button>
+      <button class="btn2" id="dlBase">Baixar base mestre atualizada</button>
+    </div>
+    <div class="hint" id="impStatus"></div>
     <div class="hint">Como funciona: os exports do Praedium (por qualquer faixa de data) são somados à <b style="color:var(--ouro2)">base mestre</b>, que guarda o histórico consolidado. Registros repetidos são atualizados pela versão mais recente (Última Alteração); nada é sobreposto ou perdido. Depois de importado, o CSV original pode ser apagado sem prejuízo, pois os dados já vivem na base mestre. Guarde o arquivo <b style="color:var(--ouro2)">mude_base.json</b>: ele é o banco de dados de longo prazo desta plataforma.</div>
   </div>
 </section>
@@ -422,7 +428,17 @@ async function cifra(obj, senha){
 }
 const GH='https://api.github.com/repos/marubensmude/gestao-leads-mude/contents/';
 const ghHead=t=>({'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json'});
-async function ghSha(path,t){const r=await fetch(GH+path,{headers:ghHead(t),cache:'no-store'});if(r.status===404)return null;if(!r.ok)throw new Error('GitHub respondeu '+r.status+' (confira o token)');return (await r.json()).sha;}
+async function ghSha(path,t){
+  const dir = path.includes('/')? path.slice(0,path.lastIndexOf('/')) : '';
+  const r = await fetch(GH+dir,{headers:ghHead(t),cache:'no-store'});
+  if(r.status===404) return null;
+  if(!r.ok) throw new Error('GitHub respondeu '+r.status+' (confira o token)');
+  const arr = await r.json();
+  if(!Array.isArray(arr)) return null;
+  const alvo = decodeURIComponent(path);
+  const it = arr.find(x=>x.path===alvo);
+  return it? it.sha : null;
+}
 async function ghPut(path,str,t,msg){const sha=await ghSha(path,t);const body={message:msg,content:b64bytes(new TextEncoder().encode(str))};if(sha)body.sha=sha;const r=await fetch(GH+path,{method:'PUT',headers:ghHead(t),body:JSON.stringify(body)});if(!r.ok)throw new Error('Falha ao gravar '+path+' ('+r.status+')');}
 async function ghDel(path,t,msg){const sha=await ghSha(path,t);if(!sha)return;const r=await fetch(GH+path,{method:'DELETE',headers:ghHead(t),body:JSON.stringify({message:msg,sha:sha})});if(!r.ok)throw new Error('Falha ao excluir '+path+' ('+r.status+')');}
 
@@ -455,6 +471,7 @@ function adminUI(){
   document.getElementById('dlCred').onclick=()=>baixaCSV('acessos_mude.csv',['Nome','Login','Senha','E-mail','Perfil'],
     CRED.filter(c=>!c._del),c=>[c.nome,c.login,c.senha,c.email,c.admin?'Administrador':'Corretor'].map(x=>'"'+String(x??'').replace(/"/g,"'")+'"').join(';'));
   document.getElementById('pubCred').onclick=publicar;
+  wireImport();
   renderCred();
 }
 function renderCred(){
@@ -507,6 +524,235 @@ async function publicar(){
   }catch(e){st.textContent='Erro: '+e.message;}
 }
 
+
+/* ============ importação incremental dos exports do Praedium ============ */
+const MOTIVOS_RECUP = ['Adiou a compra (Oportunidade Futura)','Parou de responder (após 8 tentativas)',
+  'Sem nenhum contato (8 tentativas)','Não gostou dos imóveis apresentados','Preço do imóvel muito alto',
+  'Negociação não fechada','Não aprovou financiamento','Sem recurso para compra'];
+const ETAPA_AVANC = ['Proposta','Visita Agendada','Visita Realizada','Compra Realizada'];
+const VGV_MIN = 5000, VGV_MAX = 20000000;
+
+function dataHojeBR(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+function dBRparse(s){const m=/^(\d{2})\/(\d{2})\/(\d{4})/.exec(String(s||'').trim());return m?new Date(+m[3],+m[2]-1,+m[1]):null;}
+function diasEntre(a,b){return Math.max(0,Math.round((a-b)/86400000));}
+function numBR(s){
+  if(s==null)return null; const t=String(s).trim(); if(!t)return null;
+  /* o Praedium exporta valor no formato 3200000.00; texto com vírgula vem no formato pt-BR */
+  const x = t.includes(',') ? parseFloat(t.replace(/\./g,'').replace(',','.')) : parseFloat(t);
+  return isFinite(x)?x:null;
+}
+function soDigitos(s){return String(s||'').replace(/\D/g,'');}
+function waNum(tel){const d=soDigitos(tel);if(!d)return '';if(d.length>=12&&d.startsWith('55'))return d;if(d.length===10||d.length===11)return '55'+d;return d.length>=11?d:'';}
+
+/* --- leitor de CSV com aspas, separador ; e quebras dentro de campo --- */
+function parseCSVsemi(txt){
+  const linhas=[]; let campo='', linha=[], q=false;
+  txt = txt.replace(/^﻿/,'');
+  for(let i=0;i<txt.length;i++){
+    const c=txt[i];
+    if(q){
+      if(c==='"'){ if(txt[i+1]==='"'){campo+='"';i++;} else q=false; }
+      else campo+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===';'){linha.push(campo);campo='';}
+      else if(c==='\n'){linha.push(campo);campo='';linhas.push(linha);linha=[];}
+      else if(c==='\r'){}
+      else campo+=c;
+    }
+  }
+  if(campo!==''||linha.length){linha.push(campo);linhas.push(linha);}
+  if(!linhas.length) return [];
+  const cab=linhas[0].map(h=>h.trim());
+  return linhas.slice(1).filter(l=>l.length>1&&l.some(v=>String(v).trim()!=='')).map(l=>{
+    const o={}; cab.forEach((h,i)=>o[h]=(l[i]!=null?String(l[i]).trim():'')); return o;
+  });
+}
+async function leArquivoTexto(file){
+  const buf = await file.arrayBuffer();
+  try { return new TextDecoder('utf-8',{fatal:true}).decode(buf); }
+  catch(e){ return new TextDecoder('iso-8859-1').decode(buf); }
+}
+
+/* --- normalização de uma linha do Praedium --- */
+function normLinha(r){
+  const nome = (r['Nome do contato']||r['Atendimento']||'').trim();
+  const tel  = (r['Telefone 1']||r['Telefone 2']||r['Telefone 3']||'').trim();
+  return {
+    k : ((r['Atendimento']||'')+'|'+(r['Criado em']||'')+'|'+soDigitos(tel)).toLowerCase(),
+    st: r['Status']||'', n: nome, cd: r['Criado em']||'', et: r['Etapa do Funil']||'',
+    o : r['Origem']||'Não informada', t: tel, w: waNum(tel), e: (r['E-mail principal']||'').trim(),
+    v : numBR(r['Valor do Atendimento']), im: (r['Imóveis adicionados ao atendimento']||'').trim(),
+    at: (r['Com atividades']||'')==='Sim', pt: (r['Próxima tarefa']||'').trim(),
+    i : numBR(r['Inativos há mais de (dias)']), ua: r['Última Alteração']||'',
+    mp: (r['Motivo Perdido']||'').trim(), df: (r['Data do Fechamento']||'').trim(),
+    cr: (r['Corretor responsável']||'Sem corretor').trim()
+  };
+}
+
+/* o CRM não exporta um ID; atendimentos repetidos do mesmo contato na mesma data
+   recebem um sufixo de ocorrência para que nenhum registro seja perdido no merge. */
+function chaveiaOcorrencias(lista){
+  const c={};
+  lista.forEach(l=>{ c[l.k]=(c[l.k]||0)+1; if(c[l.k]>1) l.k = l.k+'#'+c[l.k]; });
+  return lista;
+}
+
+/* --- merge no mestre preservando o sinal real de inatividade --- */
+function mergeBase(mestre, novos, nomeArq){
+  const idx = new Map(mestre.map(l=>[l.k,l]));
+  let add=0, upd=0, transf=0;
+  for(const nv of novos){
+    const at = idx.get(nv.k);
+    if(!at){ idx.set(nv.k, nv); add++; continue; }
+    const dNv=dBRparse(nv.ua), dAt=dBRparse(at.ua);
+    if(dNv && dAt && dNv < dAt) continue;           /* export mais antigo não sobrepõe */
+    const trocouCorretor = at.cr && nv.cr && at.cr !== nv.cr;
+    /* a troca de responsável no CRM zera a inatividade e reescreve a última alteração.
+       o valor real anterior é preservado para não perder a prioridade comercial. */
+    if(trocouCorretor){
+      nv.cra = at.cr;
+      nv.tr  = nv.ua || dataHojeBR();
+      transf++;
+      if((nv.i===0||nv.i==null) && at.i>0){ nv.ir = at.ir!=null?at.ir:at.i; nv.uar = at.uar||at.ua; }
+    } else {
+      if(at.ir!=null && (nv.i===0||nv.i==null) && nv.ua===at.ua){ nv.ir=at.ir; nv.uar=at.uar; }
+      else if(at.ir!=null && nv.i===at.i && nv.ua===at.ua){ nv.ir=at.ir; nv.uar=at.uar; nv.cra=at.cra; nv.tr=at.tr; }
+      if(at.cra && !nv.cra && nv.cr===at.cr){ nv.cra=at.cra; nv.tr=at.tr; if(at.ir!=null&&!nv.ir){nv.ir=at.ir;nv.uar=at.uar;} }
+    }
+    idx.set(nv.k, nv); upd++;
+  }
+  return {base:[...idx.values()], add, upd, transf, arquivo:nomeArq, linhas:novos.length};
+}
+
+/* --- score e faixa de ação --- */
+function scoreLead(l, hj){
+  const si = l._si, iEf = l._i;
+  let s = 0;
+  s += ({'Proposta':40,'Visita Agendada':35,'Visita Realizada':30,'Compra Realizada':30,'Entrada':15,'Atendimento':10})[l.et] || 0;
+  s += si<=3?25 : si<=7?20 : si<=15?15 : si<=30?10 : si<=90?5 : 0;
+  const v=l.v||0;
+  s += v>=2000000?25 : v>=1000000?20 : v>=500000?15 : v>=300000?10 : v>0?5 : 0;
+  if(l.im) s += 10;
+  const dpt = dBRparse(l.pt);
+  if(dpt) s += dpt < hj ? (diasEntre(hj,dpt)<=30 ? 15 : 8) : 5;
+  if(iEf>365) s -= 5;
+  return Math.max(0, Math.round(s));
+}
+function faixaLead(l, hj){
+  const dpt = dBRparse(l.pt);
+  /* tarefa vencida recentemente é compromisso não cumprido; tarefa vencida há meses
+     é abandono, e nesse caso vale a régua de recência para não inflar a faixa A. */
+  if(dpt && dpt < hj && diasEntre(hj,dpt)<=30) return 'A';
+  if(ETAPA_AVANC.includes(l.et)) return 'A';
+  if(l._si <= 3) return 'A';
+  if(l._si <= 15) return 'B';
+  if(l._si <= 90) return 'C';
+  return 'D';
+}
+
+/* --- reconstrói sum/ab/rc/gn a partir do mestre --- */
+function reconstroi(base, fontes){
+  const hj = new Date(); hj.setHours(0,0,0,0);
+  const prep = l=>{
+    const dUa = dBRparse(l.uar||l.ua);
+    l._si = dUa? diasEntre(hj,dUa) : (l.ir!=null?l.ir:(l.i||0));
+    l._i  = l.ir!=null? l.ir : (l.i!=null? l.i : l._si);
+    return l;
+  };
+  base.forEach(prep);
+  const ab = base.filter(l=>l.st==='Aberto').map(l=>{
+    const o = {n:l.n,cd:l.cd,t:l.t,w:l.w,e:l.e,et:l.et,o:l.o,v:l.v,im:l.im,at:l.at,pt:l.pt,
+               i:l._i,si:l._si,cr:l.cr};
+    if(l.cra){o.cra=l.cra;o.tr=l.tr;}
+    o.b = faixaLead(l,hj); o.s = scoreLead(l,hj);
+    return o;
+  }).sort((a,b)=>b.s-a.s);
+  const rc = base.filter(l=>l.st==='Perdido' && MOTIVOS_RECUP.includes(l.mp)).map(l=>({
+    n:l.n,cd:l.cd,t:l.t,w:l.w,e:l.e,o:l.o,v:l.v,mp:l.mp,si:l._si,cr:l.cr,im:l.im
+  })).sort((a,b)=>(a.si||0)-(b.si||0));
+  const gn = base.filter(l=>l.st==='Ganho').map(l=>({n:l.n,cd:l.cd,df:l.df,o:l.o,v:l.v,cr:l.cr}));
+
+  const status={}; base.forEach(l=>status[l.st]=(status[l.st]||0)+1);
+  const vgvOk = gn.filter(g=>g.v>=VGV_MIN && g.v<=VGV_MAX);
+  const bucket={}; ab.forEach(l=>bucket[l.b]=(bucket[l.b]||0)+1);
+  const agrupa = campo=>{
+    const m={};
+    base.forEach(l=>{const k=l[campo]||'Não informada';(m[k]=m[k]||{k,t:0,g:0}).t++;if(l.st==='Ganho')m[k].g++;});
+    return Object.values(m).filter(x=>x.t>=10).map(x=>({...x,p:+(100*x.g/x.t).toFixed(1)}));
+  };
+  const mot={}; base.filter(l=>l.st==='Perdido').forEach(l=>{const k=l.mp||'Não informado';mot[k]=(mot[k]||0)+1;});
+  const ano={}; gn.forEach(g=>{const d=dBRparse(g.df)||dBRparse(g.cd); if(d) ano[d.getFullYear()]=(ano[d.getFullYear()]||0)+1;});
+
+  const sum = {
+    gerado: dataHojeBR(), total: base.length, status,
+    vgv: vgvOk.reduce((a,b)=>a+b.v,0), vgv_out: gn.length - vgvOk.length,
+    abertos_bucket: bucket,
+    conv_origem: agrupa('o'), conv_corretor: agrupa('cr'),
+    motivos: Object.entries(mot).sort((a,b)=>b[1]-a[1]),
+    ganhos_ano: Object.entries(ano).sort((a,b)=>a[0]-b[0]).map(([k,v])=>[+k,v]),
+    fontes: fontes
+  };
+  base.forEach(l=>{delete l._si; delete l._i;});
+  return {sum, ab, rc, gn};
+}
+
+/* --- fluxo de importação --- */
+async function importarCSVs(files){
+  const st = document.getElementById('impStatus');
+  let base = (D.base||[]).map(l=>({...l}));
+  const fontes = (D.sum.fontes||[]).slice();
+  const temMestre = [...files].some(f=>f.name.toLowerCase().endsWith('.json'));
+  if(!base.length && !temMestre && !confirm('A base mestre não está carregada nesta sessão. Selecione o arquivo mude_base.json junto com o CSV, ou importe o export COMPLETO do Praedium; caso contrário o painel passará a mostrar apenas os registros do arquivo enviado.\n\nDeseja continuar mesmo assim?')) return;
+  let resumo=[];
+  const ordenados = [...files].sort((a,b)=>(a.name.toLowerCase().endsWith('.json')?0:1)-(b.name.toLowerCase().endsWith('.json')?0:1));
+  for(const f of ordenados){
+    st.textContent = 'Lendo '+f.name+'...';
+    if(f.name.toLowerCase().endsWith('.json')){
+      let j; try{ j = JSON.parse(await leArquivoTexto(f)); }catch(e){ st.innerHTML='<b style="color:#e06">'+esc(f.name)+' não é um JSON válido.</b>'; return; }
+      const lista = Array.isArray(j)? j : (j.base||[]);
+      if(!lista.length || !lista[0].k){ st.innerHTML='<b style="color:#e06">'+esc(f.name)+' não é uma base mestre desta plataforma.</b>'; return; }
+      const r0 = mergeBase(base, lista, f.name);
+      base = r0.base;
+      (j.fontes||[]).forEach(x=>{ if(!fontes.some(y=>y.arquivo===x.arquivo)) fontes.push(x); });
+      resumo.push(`${f.name}: base mestre com ${lista.length} atendimentos (${r0.add} novos)`);
+      continue;
+    }
+    const linhas = parseCSVsemi(await leArquivoTexto(f));
+    if(!linhas.length || !('Corretor responsável' in linhas[0])){
+      st.innerHTML = '<b style="color:#e06">Arquivo '+esc(f.name)+' não parece um export de atendimentos do Praedium.</b>'; return;
+    }
+    const r = mergeBase(base, chaveiaOcorrencias(linhas.map(normLinha)), f.name);
+    base = r.base;
+    fontes.push({arquivo:f.name, linhas:r.linhas, novos:r.add, importado_em:dataHojeBR()});
+    resumo.push(`${f.name}: ${r.linhas} linhas · ${r.add} novos · ${r.upd} atualizados${r.transf?` · ${r.transf} com troca de corretor`:''}`);
+    st.textContent = 'Processado '+f.name;
+  }
+  const novo = reconstroi(base, fontes);
+  D.base = base; D.sum = novo.sum; D.ab = novo.ab; D.rc = novo.rc; D.gn = novo.gn;
+  boot();
+  const corretores = [...new Set(D.ab.map(l=>l.cr))].sort();
+  st.innerHTML = '<b style="color:var(--verde)">Base recalculada.</b> '+esc(resumo.join(' | '))+
+    '<br>Total na base mestre: '+base.length.toLocaleString('pt-BR')+' atendimentos · '+D.ab.length+' abertos · corretores: '+esc(corretores.join(', '))+
+    '<br><b style="color:var(--ouro2)">Nada foi publicado ainda.</b> Confira os números, ajuste os acessos acima e clique em Publicar alterações. Depois, use "Baixar base mestre atualizada" e guarde o arquivo: é ele que preserva o histórico para a próxima importação.';
+}
+function wireImport(){
+  const inp=document.getElementById('csvIn'), btn=document.getElementById('impBtn'), dl=document.getElementById('dlBase');
+  if(!btn) return;
+  btn.onclick = async ()=>{
+    if(!inp.files.length){document.getElementById('impStatus').textContent='Selecione um ou mais arquivos CSV exportados do Praedium.';return;}
+    btn.disabled=true;
+    try{ await importarCSVs([...inp.files]); }
+    catch(e){ document.getElementById('impStatus').innerHTML='<b style="color:#e06">Erro na importação: '+esc(e.message)+'</b>'; }
+    btn.disabled=false;
+  };
+  dl.onclick = ()=>{
+    if(!(D.base||[]).length){document.getElementById('impStatus').textContent='A base mestre ainda está vazia. Importe um export completo primeiro.';return;}
+    const blob=new Blob([JSON.stringify({gerado:D.sum.gerado,fontes:D.sum.fontes,base:D.base})],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mude_base.json';a.click();URL.revokeObjectURL(a.href);
+  };
+}
+
 /* ================= boot (após login) ================= */
 function boot(){
 /* ---------- bases visíveis conforme o usuário ---------- */
@@ -554,7 +800,7 @@ document.getElementById('docVis').onclick = ()=>baixaWord('Mude_Visao_Geral.doc'
   {titulo:'Motivos de perda', cab:['Motivo','Atendimentos'], linhas:D.sum.motivos.map(m=>[m[0],m[1]])}]);
 
 /* ---------- células compartilhadas ---------- */
-const clienteCell = l => `<div class="nome">${esc(l.n)}</div><div class="meta2">criado em ${l.cd}${l.pt?' · tarefa: '+l.pt:''}</div>`;
+const clienteCell = l => `<div class="nome">${esc(l.n)}</div><div class="meta2">criado em ${l.cd}${l.pt?' · tarefa: '+l.pt:''}${l.cra?` · <span style="color:var(--ouro2)">recebido de ${esc(l.cra)} em ${esc(l.tr)}</span>`:''}</div>`;
 const contatoCell = (l,txt) => `${esc(l.t)}${l.w?`<br><a class="wa" target="_blank" href="https://wa.me/${l.w}?text=${encodeURIComponent(txt)}">WhatsApp ↗</a>`:''}${l.e?`<div class="meta2">${esc(l.e)}</div>`:''}`;
 const msgCell = txt => `<div class="msgc">${esc(txt)}<br><button class="btn2" style="margin-top:6px" onclick="copia(this.dataset.m,this)" data-m="${esc(txt)}">Copiar mensagem</button></div>`;
 window.copia = copia;
