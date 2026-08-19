@@ -233,6 +233,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 
 <script>
 let D = null;
+let TOTAL_PUBLICADO = 0;
 /* ================= util ================= */
 const fmtBRL = v => v==null?'—':v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -309,6 +310,7 @@ async function tentaLogin(){
   err.textContent='';
   localStorage.setItem('mudeUser', lg);
   D = payload;
+  TOTAL_PUBLICADO = (payload.sum && payload.sum.total) || 0;
   entra(payload.user);
 }
 function entra(c){
@@ -496,6 +498,14 @@ async function publicar(){
   if(!tok){st.textContent='Informe o token do GitHub para publicar.';return;}
   const ativos=CRED.filter(c=>!c._del);
   if(!ativos.some(c=>c.admin)){st.textContent='É preciso manter ao menos um administrador.';return;}
+  /* trava de segurança: publicar uma base menor que a publicada apaga atendimentos de todo mundo */
+  const totalAgora = (D.sum && D.sum.total) || 0;
+  if(TOTAL_PUBLICADO && totalAgora < TOTAL_PUBLICADO*0.9){
+    st.innerHTML = '<b style="color:#e06">Publicação bloqueada.</b> A base carregada tem '+totalAgora+
+      ' atendimentos, contra '+TOTAL_PUBLICADO+' já publicados. Publicar assim deixaria os corretores sem atendimentos. '+
+      'Recarregue a página, entre de novo e importe o <b>mude_base.json</b> junto com o CSV antes de publicar.';
+    return;
+  }
   for(const c of ativos){
     if(!c.nome||!c.login){st.textContent='Preencha nome e login de todos os corretores.';return;}
     if(!c.senha||c.senha.length<8){st.textContent='A senha de '+c.nome+' precisa de ao menos 8 caracteres.';return;}
@@ -703,7 +713,7 @@ async function importarCSVs(files){
   let base = (D.base||[]).map(l=>({...l}));
   const fontes = (D.sum.fontes||[]).slice();
   const temMestre = [...files].some(f=>f.name.toLowerCase().endsWith('.json'));
-  if(!base.length && !temMestre && !confirm('A base mestre não está carregada nesta sessão. Selecione o arquivo mude_base.json junto com o CSV, ou importe o export COMPLETO do Praedium; caso contrário o painel passará a mostrar apenas os registros do arquivo enviado.\n\nDeseja continuar mesmo assim?')) return;
+  if(!base.length && !temMestre && !confirm('ATENÇÃO: a base mestre não está carregada nesta sessão.\n\nHoje há '+(TOTAL_PUBLICADO||0)+' atendimentos publicados. Importando apenas este arquivo, a base passa a ter somente as linhas dele, e ao publicar os demais corretores ficam sem atendimentos.\n\nO certo é selecionar o mude_base.json JUNTO com o CSV. Continuar mesmo assim?')) return;
   let resumo=[];
   const ordenados = [...files].sort((a,b)=>(a.name.toLowerCase().endsWith('.json')?0:1)-(b.name.toLowerCase().endsWith('.json')?0:1));
   for(const f of ordenados){
@@ -732,7 +742,9 @@ async function importarCSVs(files){
   D.base = base; D.sum = novo.sum; D.ab = novo.ab; D.rc = novo.rc; D.gn = novo.gn;
   boot();
   const corretores = [...new Set(D.ab.map(l=>l.cr))].sort();
-  st.innerHTML = '<b style="color:var(--verde)">Base recalculada.</b> '+esc(resumo.join(' | '))+
+  const encolheu = TOTAL_PUBLICADO && base.length < TOTAL_PUBLICADO*0.9;
+  st.innerHTML = (encolheu? '<b style="color:#e06">Atenção: a base ficou menor que a publicada ('+base.length+' contra '+TOTAL_PUBLICADO+'). Não publique assim; recarregue a página e importe novamente com o mude_base.json.</b><br>':'')+
+    '<b style="color:var(--verde)">Base recalculada.</b> '+esc(resumo.join(' | '))+
     '<br>Total na base mestre: '+base.length.toLocaleString('pt-BR')+' atendimentos · '+D.ab.length+' abertos · corretores: '+esc(corretores.join(', '))+
     '<br><b style="color:var(--ouro2)">Nada foi publicado ainda.</b> Confira os números, ajuste os acessos acima e clique em Publicar alterações. Depois, use "Baixar base mestre atualizada" e guarde o arquivo: é ele que preserva o histórico para a próxima importação.';
 }
