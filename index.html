@@ -624,7 +624,12 @@ function mergeBase(mestre, novos, nomeArq){
       nv.cra = at.cr;
       nv.tr  = nv.ua || dataHojeBR();
       transf++;
-      if((nv.i===0||nv.i==null) && at.i>0){ nv.ir = at.ir!=null?at.ir:at.i; nv.uar = at.uar||at.ua; }
+      /* transferencias em cadeia: se o registro ja carregava a inatividade real
+         preservada (at.ir), ela prevalece sobre o at.i zerado na troca anterior. */
+      if(nv.i===0||nv.i==null){
+        const irReal = at.ir!=null ? at.ir : (at.i>0 ? at.i : null);
+        if(irReal!=null){ nv.ir = irReal; nv.uar = at.uar || at.ua; }
+      }
     } else {
       if(at.ir!=null && (nv.i===0||nv.i==null) && nv.ua===at.ua){ nv.ir=at.ir; nv.uar=at.uar; }
       else if(at.ir!=null && nv.i===at.i && nv.ua===at.ua){ nv.ir=at.ir; nv.uar=at.uar; nv.cra=at.cra; nv.tr=at.tr; }
