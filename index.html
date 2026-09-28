@@ -133,6 +133,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
   <button data-t="plano">Plano de Trabalho</button>
   <button data-t="recup">Recuperação de Perdidos</button>
   <button data-t="vendas">Vendas Realizadas</button>
+  <button data-t="equipe" id="navEquipe" class="hide">Gestão da Equipe</button>
   <button data-t="metodo">Metodologia</button>
   <button data-t="admin" id="navAdmin" class="hide">Administração</button>
 </nav>
@@ -151,15 +152,16 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 </section>
 
 <section id="plano" class="hide">
-  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento. Em atendimentos transferidos, a plataforma preserva a inatividade real anterior à troca de responsável, porque o CRM zera esse contador na transferência. O <b style="color:var(--ouro2)">Status da ação</b> é seu registro de trabalho: fica salvo neste navegador e não substitui a anotação no CRM, que continua sendo o registro oficial.</div>
+  <div class="hint">Atendimentos abertos classificados por prioridade e faixa de ação. Clique em uma faixa para filtrar. Cada cliente tem uma <b style="color:var(--ouro2)">mensagem pronta</b> no padrão consultivo da Mude: copie ou abra direto no WhatsApp. A coluna "Sem interação" mostra há quantos dias o corretor não mexe no atendimento. Em atendimentos transferidos, a plataforma preserva a inatividade real anterior à troca de responsável, porque o CRM zera esse contador na transferência. O <b style="color:var(--ouro2)">Status da ação</b> é o registro de trabalho do corretor: fica salvo no registro compartilhado, aparece em qualquer aparelho e é acompanhado pela gestão. Ele não substitui a anotação no CRM, que continua sendo o registro oficial e é o que muda a faixa do lead na próxima atualização da base.</div>
   <div class="reco">Recomendação de trabalho: mantenha a ordenação por Prioridade e zere a faixa "Agir hoje" antes das demais; nas faixas frias, ordene por Valor para começar pelos tickets maiores.</div>
   <div class="controls">
     <select id="selCorretor" class="soAdmin"></select>
     <input type="text" id="buscaAb" placeholder="Buscar por nome, telefone ou e-mail">
-    <select id="selStatus"><option value="">Ação: todas</option><option value="sem">Sem registro</option><option value="com">Com registro</option></select>
+    <select id="selStatus"><option value="">Ação: todas</option><option value="sem">Sem registro</option><option value="com">Com registro</option><option>Contatado</option><option>Aguardando resposta</option><option>Retorno agendado</option><option>Sem sucesso no contato</option><option>Atualizado no CRM</option></select>
     <button class="btn" id="docAb">Exportar Word</button>
     <button class="btn" id="csvAb">Baixar CSV</button>
   </div>
+  <div class="hint syncInfo"></div>
   <div class="buckets" id="bkRow"></div>
   <div class="box tbox"><table id="tbAb"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisAb">Mostrar mais</button></div>
 </section>
@@ -174,6 +176,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
     <button class="btn" id="docRc">Exportar Word</button>
     <button class="btn" id="csvRc">Baixar CSV</button>
   </div>
+  <div class="hint syncInfo"></div>
   <div class="box tbox"><table id="tbRc"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisRc">Mostrar mais</button></div>
 </section>
 
@@ -189,6 +192,13 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
   <div class="box tbox"><table id="tbGn"><thead></thead><tbody></tbody></table><button class="btn mais hide" id="maisGn">Mostrar mais</button></div>
 </section>
 
+<section id="equipe" class="hide">
+  <div class="hint">Acompanhamento do trabalho de follow-up da equipe a partir dos status registrados pelos corretores na Plataforma. <b style="color:var(--ouro2)">Trabalhados</b> são os abertos com algum status; <b style="color:var(--ouro2)">Agir hoje sem registro</b> é o principal alerta do dia. Os números de registros contam cada ação marcada, inclusive na Recuperação de Perdidos.</div>
+  <div class="reco">Recomendação de gestão: cobre primeiro os "Agir hoje sem registro"; depois, confira se os "Contatado" viraram interação ou tarefa no CRM, porque só o CRM muda a faixa do lead na próxima atualização.</div>
+  <div class="controls"><button class="btn" id="eqAtualiza">Atualizar agora</button><button class="btn" id="eqDoc">Exportar Word</button><span class="hint syncInfo" style="margin:0"></span></div>
+  <div id="eqConteudo"></div>
+</section>
+
 <section id="metodo" class="hide">
   <div class="box met">
     <h3>Como a priorização funciona</h3>
@@ -196,6 +206,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
     <p>Os atendimentos são distribuídos em quatro faixas. <b>Agir hoje</b> reúne tarefas vencidas, leads recém-chegados e etapas avançadas: é a lista que cada corretor deve zerar diariamente. <b>Follow-up da semana</b> concentra leads com 4 a 15 dias sem contato. <b>Reaquecer</b> cobre a faixa de 16 a 90 dias, em que o contato precisa vir acompanhado de uma novidade concreta. <b>Requalificar</b> reúne os inativos há mais de 90 dias: a plataforma indica o motivo provável do esfriamento e recomenda uma última tentativa estruturada; sem resposta, registrar o motivo de perda correto no CRM.</p>
     <p>As <b>mensagens sugeridas</b> seguem o padrão consultivo da Mude Imóveis e se apoiam nos Seis Pontos (SMP): localização, tipologia, qualidade, diferenciais, preço e forma de pagamento. Elas são personalizadas com o nome do cliente, a origem do lead, a faixa de valor e o momento do atendimento, e assinadas com o nome de quem está logado. São ponto de partida: o corretor deve ajustar ao contexto de cada conversa.</p>
     <p>A coluna <b>"Sem interação"</b> mede os dias desde a última alteração do atendimento no CRM, ou seja, há quanto tempo o corretor não trabalha aquele cliente. É o principal termômetro de disciplina de follow-up.</p>
+    <p>O <b>Status da ação</b> registra o que o corretor fez com cada lead (contatado, aguardando resposta, retorno agendado, sem sucesso no contato, atualizado no CRM). O registro é compartilhado: aparece em qualquer aparelho, mostra quem registrou e quando, e alimenta a aba Gestão da Equipe. Por privacidade, o registro guarda apenas um código de cada lead, sem nome, telefone ou e-mail do cliente. O status não altera a faixa nem o score: a faixa muda quando o contato é lançado no CRM e a base é atualizada.</p>
     <p>A base é <b>incremental</b>: cada novo export do Praedium soma registros e atualiza os existentes, sem sobrepor o histórico. Este material é uma curadoria comercial, não um laudo técnico, e reflete a base na data indicada no topo.</p>
   </div>
 </section>
@@ -210,10 +221,11 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
     </div>
     <div class="controls">
       <input type="password" id="ghTok" placeholder="Token do GitHub (github_pat_...)" style="min-width:300px">
+      <input type="password" id="gkIn" placeholder="Chave de gestão (status compartilhado)" style="min-width:260px">
       <button class="btn" id="pubCred">Publicar alterações</button>
     </div>
     <div class="hint" id="pubStatus"></div>
-    <div class="hint">O token fica salvo apenas neste navegador e grava os arquivos cifrados direto no repositório. Após publicar, baixe o CSV de acessos e guarde-o; envie-o junto com o próximo export do CRM para manter a rotina de atualização em sincronia.</div>
+    <div class="hint">O token fica salvo apenas neste navegador e grava os arquivos cifrados direto no repositório. A <b style="color:var(--ouro2)">chave de gestão</b> ativa o status compartilhado: é informada uma única vez e passa a ficar guardada no seu acesso cifrado. A cada publicação, a lista de corretores é sincronizada com o registro compartilhado, e quem for removido perde o acesso a ele. Após publicar, baixe o CSV de acessos e guarde-o; envie-o junto com o próximo export do CRM para manter a rotina de atualização em sincronia.</div>
   </div>
   <div class="box"><h3>Gestão da base incremental</h3>
     <div class="hint" id="fontesInfo"></div>
@@ -228,7 +240,7 @@ footer{border-top:1px solid var(--borda);padding:18px 34px;color:var(--cinza);fo
 </section>
 
 </main>
-<footer><span>Mude Imóveis · Dourados-MS · Uso interno</span><span>Plataforma de Follow-up · v3.1 · Online</span></footer>
+<footer><span>Mude Imóveis · Dourados-MS · Uso interno</span><span>Plataforma de Follow-up · v3.2 · Online</span></footer>
 </div>
 
 <script>
@@ -318,9 +330,10 @@ function entra(c){
   document.getElementById('loginWrap').classList.add('hide');
   document.getElementById('app').style.display='block';
   document.getElementById('uChip').innerHTML = `Logado como <b>${esc(c.nome)}</b>${c.admin?' · Administrador':''}`;
-  if(c.admin) document.getElementById('navAdmin').classList.remove('hide');
+  if(c.admin){ document.getElementById('navAdmin').classList.remove('hide'); document.getElementById('navEquipe').classList.remove('hide'); }
   document.querySelectorAll('.soAdmin').forEach(el=>{if(!c.admin) el.classList.add('hide');});
   boot();
+  iniciaStatus();
 }
 document.getElementById('lgBtn').onclick = tentaLogin;
 document.getElementById('lgPass').addEventListener('keydown',e=>{if(e.key==='Enter')tentaLogin();});
@@ -444,23 +457,171 @@ async function ghSha(path,t){
 async function ghPut(path,str,t,msg){const sha=await ghSha(path,t);const body={message:msg,content:b64bytes(new TextEncoder().encode(str))};if(sha)body.sha=sha;const r=await fetch(GH+path,{method:'PUT',headers:ghHead(t),body:JSON.stringify(body)});if(!r.ok)throw new Error('Falha ao gravar '+path+' ('+r.status+')');}
 async function ghDel(path,t,msg){const sha=await ghSha(path,t);if(!sha)return;const r=await fetch(GH+path,{method:'DELETE',headers:ghHead(t),body:JSON.stringify({message:msg,sha:sha})});if(!r.ok)throw new Error('Falha ao excluir '+path+' ('+r.status+')');}
 
-/* ============ status da ação (registro local de trabalho) ============ */
+/* ============ status da ação (compartilhado · Supabase) ============ */
+/* O banco guarda apenas um código (hash SHA-256) de cada lead, o status, quem registrou e quando.
+   Nome, telefone e e-mail do cliente nunca saem da base cifrada. */
+const SUPA_URL='https://ghbikzuttsvqvzxsqkbu.supabase.co';
+const SUPA_KEY='sb_publishable_RcR_4O-TwJ4vVCGZiCjv_g_rsrs-En4';
+async function rpc(fn,params){
+  const r=await fetch(SUPA_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+    body:JSON.stringify(params||{})});
+  const d=await r.json().catch(()=>null);
+  if(!r.ok) throw new Error((d&&(d.message||d.error||d.hint))||('HTTP '+r.status));
+  return d;
+}
+/* SHA-256 síncrono (hex) */
+function sha256hex(str){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const b=new TextEncoder().encode(str), l=b.length, nb=((l+9+63)>>6)<<6, m=new Uint8Array(nb);
+  m.set(b); m[l]=0x80; const dv=new DataView(m.buffer); dv.setUint32(nb-4,(l*8)>>>0); dv.setUint32(nb-8,Math.floor(l/0x20000000));
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const w=new Uint32Array(64), ro=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<nb;o+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(o+i*4);
+    for(let i=16;i<64;i++){const s0=ro(w[i-15],7)^ro(w[i-15],18)^(w[i-15]>>>3), s1=ro(w[i-2],17)^ro(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+    let [a,bb,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const t1=(h+(ro(e,6)^ro(e,11)^ro(e,25))+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+      const t2=((ro(a,2)^ro(a,13)^ro(a,22))+((a&bb)^(a&c)^(bb&c)))>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=bb;bb=a;a=(t1+t2)>>>0;
+    }
+    H=[(H[0]+a)>>>0,(H[1]+bb)>>>0,(H[2]+c)>>>0,(H[3]+d)>>>0,(H[4]+e)>>>0,(H[5]+f)>>>0,(H[6]+g)>>>0,(H[7]+h)>>>0];
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+function novoToken(){return [...crypto.getRandomValues(new Uint8Array(24))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+
 const ST_OPCOES=['Contatado','Aguardando resposta','Retorno agendado','Sem sucesso no contato','Atualizado no CRM'];
 const leadKey=l=>((l.n||'')+'|'+(l.w||'')+'|'+(l.cd||'')).toLowerCase();
-let ACAO={};
-try{ACAO=JSON.parse(localStorage.getItem('mudeAcao')||'{}');}catch(e){ACAO={};}
-function acaoDe(l){return ACAO[leadKey(l)]||null;}
-function registraAcao(kEnc,v,spanId){
-  const k=decodeURIComponent(kEnc);
-  if(v){ACAO[k]={s:v,d:new Date().toLocaleDateString('pt-BR')};}else{delete ACAO[k];}
-  localStorage.setItem('mudeAcao',JSON.stringify(ACAO));
-  const sp=document.getElementById(spanId); if(sp)sp.textContent=v?('em '+(ACAO[k]||{}).d):'';
+const _hcache=new WeakMap();
+function leadHash(l){let h=_hcache.get(l);if(!h){h=sha256hex(leadKey(l));_hcache.set(l,h);}return h;}
+const lsGet=(k,def)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+const dataBR=iso=>(iso?new Date(iso):new Date()).toLocaleDateString('pt-BR');
+const horaBR=iso=>(iso?new Date(iso):new Date()).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+let ACAO={};   /* hash → {s,d,em,por,login} */
+let HIST=[];   /* registros dos últimos 30 dias */
+const SYNC={modo:'local',ok:false,erro:'',em:null,pend:0};
+const cacheK=()=>'mudeAcaoV2_'+((USER&&USER.login)||'');
+const filaK =()=>'mudeAcaoFila_'+((USER&&USER.login)||'');
+const reg2acao=r=>({s:r.status,d:dataBR(r.registrado_em),em:r.registrado_em,por:r.nome,login:r.login});
+function acaoDe(l){return ACAO[leadHash(l)]||null;}
+function todosLeadsVisiveis(){return USER.admin?[...D.ab,...D.rc]:[...D.ab.filter(l=>l.cr===USER.nome),...D.rc.filter(l=>l.cr===USER.nome)];}
+
+/* modo local (acesso publicado antes da versão com status compartilhado) */
+function carregaLocal(){
+  const leg=lsGet('mudeAcao',{}); ACAO={};
+  todosLeadsVisiveis().forEach(l=>{const a=leg[leadKey(l)]; if(a) ACAO[leadHash(l)]={s:a.s,d:a.d,por:USER.nome,login:USER.login};});
 }
-function statusCell(l,uid){
-  const a=acaoDe(l), kEnc=encodeURIComponent(leadKey(l));
-  return `<select class="tin" style="min-width:150px" onchange="registraAcao('${kEnc}',this.value,'std${uid}')"><option value="">—</option>${ST_OPCOES.map(o=>`<option${a&&a.s===o?' selected':''}>${o}</option>`).join('')}</select><div class="meta2" id="std${uid}">${a?'em '+a.d:''}</div>`;
+
+async function iniciaStatus(){
+  if(!USER.tk){SYNC.modo='local';carregaLocal();atualizaTelasStatus(true);return;}
+  SYNC.modo='compartilhado';
+  ACAO=lsGet(cacheK(),{});           /* mostra o último estado conhecido enquanto carrega */
+  atualizaTelasStatus(true);
+  await carregaStatus(true);
+  if(!window._stTimer) window._stTimer=setInterval(()=>{if(!document.hidden) carregaStatus(false);},5*60*1000);
 }
-const acaoTxt=l=>{const a=acaoDe(l);return a?`${a.s} (${a.d})`:'';};
+
+async function carregaStatus(reRender){
+  if(SYNC.modo!=='compartilhado') return;
+  try{
+    await enviaFila();
+    const hashes = USER.admin? null : todosLeadsVisiveis().map(leadHash);
+    const rows = await rpc('gl_listar',{p_token:USER.tk,p_leads:hashes});
+    const novo={}; (rows||[]).forEach(r=>novo[r.lead]=reg2acao(r));
+    lsGet(filaK(),[]).forEach(f=>{ if(f.v) novo[f.h]={s:f.v,d:dataBR(f.em),em:f.em,por:USER.nome,login:USER.login}; else delete novo[f.h]; });
+    ACAO=novo;
+    await migraLegado();
+    HIST = await rpc('gl_historico',{p_token:USER.tk,p_dias:30}) || [];
+    lsSet(cacheK(),ACAO);
+    SYNC.ok=true; SYNC.erro=''; SYNC.em=new Date();
+  }catch(e){ SYNC.ok=false; SYNC.erro=e.message; }
+  atualizaTelasStatus(!!reRender);
+}
+
+/* envia registros feitos sem conexão */
+async function enviaFila(){
+  const fila=lsGet(filaK(),[]); const resto=[];
+  for(const f of fila){
+    try{ await rpc('gl_registrar',{p_token:USER.tk,p_lead:f.h,p_status:f.v||'',p_lista:f.li||'ab'}); }
+    catch(e){ resto.push(f); }
+  }
+  lsSet(filaK(),resto); SYNC.pend=resto.length;
+}
+
+/* leva para o banco as marcações antigas, que ficavam só neste navegador */
+async function migraLegado(){
+  const leg=lsGet('mudeAcao',null); if(!leg||!Object.keys(leg).length) return;
+  let falhou=false, n=0;
+  const rcSet=new Set(D.rc);
+  for(const l of todosLeadsVisiveis()){
+    const a=leg[leadKey(l)]; const h=leadHash(l);
+    if(!a||ACAO[h]||!ST_OPCOES.includes(a.s)) continue;
+    try{ const em=await rpc('gl_registrar',{p_token:USER.tk,p_lead:h,p_status:a.s,p_lista:rcSet.has(l)?'rc':'ab'});
+         ACAO[h]={s:a.s,d:dataBR(em),em,por:USER.nome,login:USER.login}; n++; }
+    catch(e){ falhou=true; }
+  }
+  if(!falhou){ try{localStorage.setItem('mudeAcaoMigrado',localStorage.getItem('mudeAcao'));localStorage.removeItem('mudeAcao');}catch(e){} }
+  if(n) SYNC.migrados=n;
+}
+
+async function registraAcao(h,v,spanId,lista){
+  const em=new Date().toISOString();
+  if(v) ACAO[h]={s:v,d:dataBR(em),em,por:USER.nome,login:USER.login}; else delete ACAO[h];
+  const sp=document.getElementById(spanId);
+  const marca=txt=>{if(sp)sp.innerHTML=txt;};
+  if(SYNC.modo!=='compartilhado'){
+    /* modo local: mesmo comportamento da versão anterior */
+    const leg=lsGet('mudeAcao',{}); const l=todosLeadsVisiveis().find(x=>leadHash(x)===h);
+    if(l){ if(v) leg[leadKey(l)]={s:v,d:dataBR(em)}; else delete leg[leadKey(l)]; lsSet('mudeAcao',leg); }
+    marca(v?'em '+dataBR(em):''); return;
+  }
+  marca(v?'salvando...':'');
+  try{
+    const r=await rpc('gl_registrar',{p_token:USER.tk,p_lead:h,p_status:v||'',p_lista:lista||'ab'});
+    if(v) ACAO[h].em=r;
+    HIST.unshift({lead:h,status:v||'Removido',lista:lista||'ab',login:USER.login,nome:USER.nome,registrado_em:r});
+    marca(v?'em '+dataBR(r)+' · <span style="color:var(--verde)">salvo</span>':'');
+    SYNC.ok=true; SYNC.erro='';
+  }catch(e){
+    const fila=lsGet(filaK(),[]).filter(f=>f.h!==h); fila.push({h,v,li:lista||'ab',em}); lsSet(filaK(),fila); SYNC.pend=fila.length;
+    marca(v?'em '+dataBR(em)+' · <span style="color:var(--verm)">pendente de envio</span>':'<span style="color:var(--verm)">pendente de envio</span>');
+    SYNC.ok=false; SYNC.erro=e.message;
+  }
+  lsSet(cacheK(),ACAO);
+  atualizaTelasStatus(false);
+}
+window.registraAcao=registraAcao;
+
+function statusCell(l,uid,lista){
+  const a=acaoDe(l), h=leadHash(l);
+  const quem=a&&a.por&&(USER.admin||a.login!==USER.login)?' · '+esc(primNome(a.por)):'';
+  return `<select class="tin" style="min-width:150px" onchange="registraAcao('${h}',this.value,'std${uid}','${lista||'ab'}')"><option value="">—</option>${ST_OPCOES.map(o=>`<option${a&&a.s===o?' selected':''}>${o}</option>`).join('')}</select><div class="meta2" id="std${uid}">${a?'em '+a.d+quem:''}</div>`;
+}
+const acaoTxt=l=>{const a=acaoDe(l);return a?`${a.s} (${a.d}${a.por?' · '+a.por:''})`:'';};
+
+/* contagem de registros (sem "Removido") por período */
+function contaHist(filtro,dias){
+  const lim=new Date(); lim.setHours(0,0,0,0); lim.setDate(lim.getDate()-(dias-1));
+  return HIST.filter(r=>r.status!=='Removido'&&new Date(r.registrado_em)>=lim&&filtro(r)).length;
+}
+function syncTexto(){
+  if(SYNC.modo!=='compartilhado') return '<span style="color:var(--ouro2)">Status salvo apenas neste navegador.</span> O registro compartilhado com a gestão é ativado na próxima publicação dos acessos.';
+  const pend=SYNC.pend?` · <span style="color:var(--verm)">${SYNC.pend} registro(s) pendente(s) de envio</span>`:'';
+  if(!SYNC.em&&!SYNC.erro) return 'Carregando status compartilhado...';
+  if(!SYNC.ok) return `<span style="color:var(--verm)">Sem conexão com o registro compartilhado (${esc(SYNC.erro)}).</span> O que você marcar agora fica guardado e é enviado automaticamente.${pend}`;
+  const meu = `Seus registros: <b style="color:var(--ouro2)">${contaHist(r=>r.login===USER.login,1)}</b> hoje · <b style="color:var(--ouro2)">${contaHist(r=>r.login===USER.login,7)}</b> nos últimos 7 dias`;
+  const mig = SYNC.migrados?` · ${SYNC.migrados} marcações antigas deste navegador foram enviadas`:'';
+  return `<span style="color:var(--verde)">Status compartilhado com a gestão</span> · atualizado às ${SYNC.em.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${meu}${mig}${pend}`;
+}
+function atualizaTelasStatus(reRender){
+  document.querySelectorAll('.syncInfo').forEach(el=>el.innerHTML=syncTexto());
+  if(reRender && window._reRender) window._reRender();
+  if(window._renderEquipe) window._renderEquipe();
+}
 
 /* ============ administração: gestão de acessos ============ */
 let CRED=null;
@@ -469,6 +630,7 @@ function gerarSenha(nome){const p=primNome(nome||'user').normalize('NFD').replac
 function adminUI(){
   CRED = D.cred.map(c=>({...c}));
   const tok=document.getElementById('ghTok'); tok.value = localStorage.getItem('mudeGhTok')||'';
+  document.getElementById('gkIn').value = D.gk || localStorage.getItem('mudeGk') || '';
   document.getElementById('addCred').onclick=()=>{CRED.push({login:'',nome:'',email:'',senha:'',admin:false,_novo:true});renderCred();};
   document.getElementById('dlCred').onclick=()=>baixaCSV('acessos_mude.csv',['Nome','Login','Senha','E-mail','Perfil'],
     CRED.filter(c=>!c._del),c=>[c.nome,c.login,c.senha,c.email,c.admin?'Administrador':'Corretor'].map(x=>'"'+String(x??'').replace(/"/g,"'")+'"').join(';'));
@@ -513,13 +675,26 @@ async function publicar(){
   const logins=ativos.map(c=>c.login);
   if(new Set(logins).size!==logins.length){st.textContent='Há logins duplicados.';return;}
   localStorage.setItem('mudeGhTok',tok);
+  /* status compartilhado: cada acesso recebe um token próprio (estável entre publicações) */
+  ativos.forEach(c=>{ if(!c.tk) c.tk=novoToken(); });
+  const gk=document.getElementById('gkIn').value.trim();
+  let avisoSt='', gkOk=false;
+  if(gk){
+    try{
+      st.textContent='Sincronizando a equipe com o status compartilhado...';
+      await rpc('gl_sincronizar_usuarios',{p_chave:gk,p_usuarios:ativos.map(c=>({login:c.login,nome:c.nome,token_hash:sha256hex(c.tk),admin:!!c.admin}))});
+      gkOk=true; D.gk=gk; try{localStorage.setItem('mudeGk',gk);}catch(e){}
+    }catch(e){ avisoSt='<br><b style="color:var(--verm)">Status compartilhado não sincronizado:</b> '+esc(e.message)+' Os acessos foram publicados normalmente; confira a chave de gestão e publique de novo.'; }
+  } else {
+    avisoSt='<br><b style="color:var(--ouro2)">Status compartilhado ainda não ativado:</b> informe a chave de gestão e publique de novo para que os registros dos corretores cheguem até você.';
+  }
   try{
     let n=0;
-    const credPub=ativos.map(x=>({login:x.login,nome:x.nome,email:x.email,senha:x.senha,admin:x.admin}));
+    const credPub=ativos.map(x=>({login:x.login,nome:x.nome,email:x.email,senha:x.senha,admin:x.admin,tk:x.tk}));
     for(const c of ativos){
       n++; st.textContent=`Publicando ${n} de ${ativos.length}: ${c.login}...`;
-      const payload = c.admin ? {user:{login:c.login,nome:c.nome,admin:true},sum:D.sum,ab:D.ab,rc:D.rc,gn:D.gn,cred:credPub}
-        : {user:{login:c.login,nome:c.nome,admin:false},sum:D.sum,ab:D.ab.filter(l=>l.cr===c.nome),rc:D.rc.filter(l=>l.cr===c.nome),gn:D.gn.filter(l=>l.cr===c.nome)};
+      const payload = c.admin ? {user:{login:c.login,nome:c.nome,admin:true,tk:c.tk},sum:D.sum,ab:D.ab,rc:D.rc,gn:D.gn,cred:credPub,gk:gkOk?gk:(D.gk||undefined)}
+        : {user:{login:c.login,nome:c.nome,admin:false,tk:c.tk},sum:D.sum,ab:D.ab.filter(l=>l.cr===c.nome),rc:D.rc.filter(l=>l.cr===c.nome),gn:D.gn.filter(l=>l.cr===c.nome)};
       const enc=await cifra(payload,c.senha);
       await ghPut('data/'+encodeURIComponent(c.login)+'.json',JSON.stringify(enc),tok,'Atualiza acesso de '+c.login);
     }
@@ -530,7 +705,10 @@ async function publicar(){
     CRED=ativos.map(c=>({...c,_novo:false}));
     D.cred=CRED.map(c=>({...c}));
     renderCred();
-    st.innerHTML='<b style="color:var(--verde)">Publicado com sucesso.</b> As alterações entram no ar em 1 a 2 minutos. Baixe o CSV de acessos atualizado e guarde-o.';
+    st.innerHTML='<b style="color:var(--verde)">Publicado com sucesso.</b> As alterações entram no ar em 1 a 2 minutos. Baixe o CSV de acessos atualizado e guarde-o.'+(gkOk?' Status compartilhado sincronizado para '+ativos.length+' acessos.':'')+avisoSt;
+    /* ativa o status compartilhado nesta sessão, sem precisar sair e entrar */
+    const eu=ativos.find(c=>c.login===USER.login);
+    if(gkOk && eu && eu.tk && USER.tk!==eu.tk){ USER.tk=eu.tk; iniciaStatus(); }
   }catch(e){st.textContent='Erro: '+e.message;}
 }
 
@@ -859,7 +1037,7 @@ const tAb = montaTabela({
     let base = meuAb().filter(l=>!c||l.cr===c);
     renderBuckets(base);
     if(bkSel) base = base.filter(l=>l.b===bkSel);
-    if(stF) base = base.filter(l=> stF==='com' ? !!acaoDe(l) : !acaoDe(l));
+    if(stF) base = base.filter(l=>{const a=acaoDe(l); return stF==='com'? !!a : stF==='sem'? !a : (a&&a.s===stF);});
     if(q) base = base.filter(l=>(l.n+l.t+(l.e||'')).toLowerCase().includes(q));
     return base;
   },
@@ -868,7 +1046,7 @@ const tAb = montaTabela({
     return `<tr><td class="sc">${l.s}</td><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td>
     <td class="et">${esc(l.et)}</td><td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td>
     <td>${l.i>=0?l.i+' d':'—'}</td><td>${l.si!=null?l.si+' d':'—'}</td>
-    <td><span class="tag t${l.b}">${BK[l.b].t}</span></td><td>${statusCell(l,'A'+i)}</td><td class="acao">${esc(analiseCell(l))}</td><td>${msgCell(txt)}</td></tr>`;
+    <td><span class="tag t${l.b}">${BK[l.b].t}</span></td><td>${statusCell(l,'A'+i,'ab')}</td><td class="acao">${esc(analiseCell(l))}</td><td>${msgCell(txt)}</td></tr>`;
   }
 });
 const abExpRows = ()=>tAb._rows.map(l=>[BK[l.b].t+' · score '+l.s, l.n, l.t+(l.e?' · '+l.e:''), l.et, l.o, l.v?fmtBRL(l.v):'—', (l.i>=0?l.i+' d':'—')+' / '+(l.si!=null?l.si+' d':'—'), analiseCell(l), msgFor(l,l.b,USER.nome)]);
@@ -917,7 +1095,7 @@ const tRc = montaTabela({
     const txt = msgFor(l,'R',USER.nome);
     return `<tr><td>${clienteCell(l)}</td><td>${contatoCell(l,txt)}</td><td class="et">${esc(l.mp)}</td>
     <td class="et">${esc(l.o)}</td><td>${fmtBRL(l.v)}</td><td>${l.si!=null?l.si+' d':'—'}</td>
-    <td class="et">${esc(l.cr)}</td><td>${statusCell(l,'R'+i)}</td><td>${msgCell(txt)}</td></tr>`;
+    <td class="et">${esc(l.cr)}</td><td>${statusCell(l,'R'+i,'rc')}</td><td>${msgCell(txt)}</td></tr>`;
   }
 });
 document.getElementById('docRc').onclick = ()=>baixaWord('Mude_Recuperacao_Perdidos.doc','Recuperação de Perdidos',
@@ -972,7 +1150,70 @@ if(USER.admin){
     (D.sum.fontes||[]).map(f=>`${esc(f.arquivo)} (${f.linhas} linhas, ${f.novos} novos, importado em ${f.importado_em})`).join(' · ');
 }
 
+
+/* ---------- gestão da equipe (administrador) ---------- */
+window._renderEquipe = null;
+if(USER.admin){
+  const mapaLead = new Map();
+  D.ab.forEach(l=>mapaLead.set(leadHash(l),{l,lista:'ab'}));
+  D.rc.forEach(l=>{const h=leadHash(l); if(!mapaLead.has(h)) mapaLead.set(h,{l,lista:'rc'});});
+  const pct=(a,b)=>b?Math.round(100*a/b)+'%':'—';
+  window._renderEquipe = ()=>{
+    const box=document.getElementById('eqConteudo'); if(!box) return;
+    document.querySelectorAll('.syncInfo').forEach(el=>el.innerHTML=syncTexto());
+    if(SYNC.modo!=='compartilhado'){
+      box.innerHTML='<div class="box"><div class="hint" style="margin:0">O acompanhamento da equipe é ativado quando a <b style="color:var(--ouro2)">chave de gestão</b> é informada na aba Administração e os acessos são publicados. A partir daí, cada status registrado por um corretor aparece aqui.</div></div>';
+      return;
+    }
+    const corretores=[...new Set(D.ab.map(l=>l.cr))].sort();
+    const linhas=corretores.map(c=>{
+      const ab=D.ab.filter(l=>l.cr===c);
+      const trab=ab.filter(l=>acaoDe(l)).length;
+      const aSem=ab.filter(l=>l.b==='A'&&!acaoDe(l)).length;
+      const semSuc=ab.filter(l=>{const a=acaoDe(l);return a&&a.s==='Sem sucesso no contato';}).length;
+      const hoje=contaHist(r=>r.nome===c,1), sem7=contaHist(r=>r.nome===c,7), d30=contaHist(r=>r.nome===c,30);
+      const ult=HIST.find(r=>r.nome===c&&r.status!=='Removido');
+      return {c,ab:ab.length,trab,aSem,semSuc,hoje,sem7,d30,ult:ult?ult.registrado_em:null};
+    });
+    const tot=k=>linhas.reduce((s,x)=>s+x[k],0);
+    const porStatus={}; D.ab.forEach(l=>{const a=acaoDe(l); if(a) porStatus[a.s]=(porStatus[a.s]||0)+1;});
+    const kp=[
+      ['Abertos da equipe', tot('ab'), 'carteira ativa'],
+      ['Trabalhados', tot('trab'), pct(tot('trab'),tot('ab'))+' com status registrado'],
+      ['Agir hoje sem registro', tot('aSem'), 'prioridade sem ação registrada'],
+      ['Registros hoje', tot('hoje'), 'todas as listas'],
+      ['Registros em 7 dias', tot('sem7'), 'ritmo da semana'],
+      ['Sem sucesso no contato', porStatus['Sem sucesso no contato']||0, 'pedem nova tentativa ou canal']];
+    const tabela = `<div class="box tbox"><table><thead><tr><th>Corretor</th><th>Abertos</th><th>Trabalhados</th><th>% da carteira</th><th>Agir hoje sem registro</th><th>Hoje</th><th>7 dias</th><th>30 dias</th><th>Sem sucesso</th><th>Último registro</th></tr></thead><tbody>`+
+      linhas.map(x=>`<tr><td class="nome">${esc(x.c)}</td><td>${x.ab}</td><td>${x.trab}</td><td>${pct(x.trab,x.ab)}</td>
+        <td>${x.aSem?`<span style="color:var(--verm);font-weight:600">${x.aSem}</span>`:'0'}</td><td>${x.hoje}</td><td>${x.sem7}</td><td>${x.d30}</td><td>${x.semSuc}</td>
+        <td class="et">${x.ult?horaBR(x.ult):'nenhum registro'}</td></tr>`).join('')+`</tbody></table></div>`;
+    const semReg=tot('ab')-tot('trab'), maxB=Math.max(1,semReg,...Object.values(porStatus));
+    const barra=(lb,n)=>`<div class="bar"><div class="lb">${lb}</div><div class="tr"><div class="fl" style="width:${n?Math.max(2,100*n/maxB):0}%"></div></div><div class="vl">${n}</div></div>`;
+    const distrib = `<div class="box"><h3>Status atual dos abertos</h3>`+ST_OPCOES.map(s=>barra(s,porStatus[s]||0)).join('')+barra('Sem registro',semReg)+`</div>`;
+    const recentes = HIST.slice(0,80).map(r=>{
+      const m=mapaLead.get(r.lead); const l=m&&m.l;
+      return `<tr><td class="et">${horaBR(r.registrado_em)}</td><td>${esc(r.nome)}</td><td class="nome">${l?esc(l.n):'<span class="et">lead fora da base atual</span>'}</td>
+        <td>${r.status==='Removido'?'<span class="et">status removido</span>':esc(r.status)}</td>
+        <td>${l&&m.lista==='ab'?`<span class="tag t${l.b}">${BK[l.b].t}</span>`:'<span class="et">Recuperação</span>'}</td></tr>`;}).join('');
+    box.innerHTML = `<div class="kpis">${kp.map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('')}</div>
+      ${tabela}
+      <div class="grid2">${distrib}
+      <div class="box tbox"><h3 style="padding:20px 20px 0">Últimos registros da equipe</h3><table><thead><tr><th>Quando</th><th>Corretor</th><th>Cliente</th><th>Status</th><th>Faixa</th></tr></thead><tbody>${recentes||'<tr><td colspan="5" class="et">Nenhum registro nos últimos 30 dias.</td></tr>'}</tbody></table></div></div>`;
+  };
+  document.getElementById('eqAtualiza').onclick=()=>carregaStatus(true);
+  document.getElementById('eqDoc').onclick=()=>{
+    const corretores=[...new Set(D.ab.map(l=>l.cr))].sort();
+    baixaWord('Mude_Gestao_da_Equipe.doc','Gestão da Equipe · Follow-up',`Base de ${hoje()} · status atualizado em ${SYNC.em?SYNC.em.toLocaleString('pt-BR'):'—'}`,[
+      {titulo:'Produtividade por corretor', cab:['Corretor','Abertos','Trabalhados','% carteira','Agir hoje sem registro','Registros 7 dias','Registros 30 dias'],
+       linhas:corretores.map(c=>{const ab=D.ab.filter(l=>l.cr===c),t=ab.filter(l=>acaoDe(l)).length;
+         return [c,ab.length,t,pct(t,ab.length),ab.filter(l=>l.b==='A'&&!acaoDe(l)).length,contaHist(r=>r.nome===c,7),contaHist(r=>r.nome===c,30)];})}]);
+  };
+}
+window._reRender = ()=>{tAb.render(); tRc.render();};
+
 tAb.render(); tRc.render(); tGn.render();
+atualizaTelasStatus(false);
 }
 /* login salvo: preenche o campo (a senha é sempre solicitada) */
 const salvoLg = localStorage.getItem('mudeUser');
